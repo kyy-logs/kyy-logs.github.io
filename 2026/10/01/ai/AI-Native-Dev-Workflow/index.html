@@ -1,0 +1,1233 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/cat.ico">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Yangyang Kong">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="“AI-native 开发”这个词现在被用得很大，但大部分时候它只被当成“用没用 AI 写代码”来理解。这个理解是有问题的：一个人用 Copilot 补全几行代码，和一个人把整个需求丢给 Agent 然后只做验收，这两件事在工程上是完全不同的物种。混为一谈，会导致既高估了前者的收益，也低估了后者的代价。 这篇文章想干一件事：把 AI-native 开发拆成一套可执行的工作流，讲清楚每一步人和 Ag">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI-native 开发工作流">
+<meta property="og:url" content="https://kyy-logs.github.io/2026/10/01/ai/AI-Native-Dev-Workflow/index.html">
+<meta property="og:site_name" content="多云的小站">
+<meta property="og:description" content="“AI-native 开发”这个词现在被用得很大，但大部分时候它只被当成“用没用 AI 写代码”来理解。这个理解是有问题的：一个人用 Copilot 补全几行代码，和一个人把整个需求丢给 Agent 然后只做验收，这两件事在工程上是完全不同的物种。混为一谈，会导致既高估了前者的收益，也低估了后者的代价。 这篇文章想干一件事：把 AI-native 开发拆成一套可执行的工作流，讲清楚每一步人和 Ag">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-10-01T03:11:24.000Z">
+<meta property="article:modified_time" content="2026-10-01T15:12:16.853Z">
+<meta property="article:author" content="Yangyang Kong">
+<meta property="article:tag" content="AI-native">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="工程实践">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>AI-native 开发工作流 - 多云的小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyy-logs.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":null,"loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"left","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>多云的小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-code-fill"></i>
+                <span>语言</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/language/java/" target="_self">
+                    <i class="iconfont icon-tags-fill"></i>
+                    <span>Java</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/language/spring/" target="_self">
+                    <i class="iconfont icon-tags-fill"></i>
+                    <span>Spring</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-database-fill"></i>
+                <span>数据库</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/database/mysql/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>MySQL</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/database/redis/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>Redis</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/mq/" target="_self">
+                <i class="iconfont icon-interactive-fill"></i>
+                <span>消息队列</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                
+                <span>计算机基础</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>计算机网络</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>操作系统</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/ai/" target="_self">
+                
+                <span>Ai</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/algorithm/" target="_self">
+                <i class="iconfont icon-launch-fill"></i>
+                <span>算法</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/scenario/" target="_self">
+                <i class="iconfont icon-project-fill"></i>
+                <span>场景题</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/opensource/" target="_self">
+                <i class="iconfont icon-github-fill"></i>
+                <span>开源项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="AI-native 开发工作流"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-10-01 11:11" pubdate>
+          2026年10月1日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          44 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="padding-left: 2rem; margin-right: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">AI-native 开发工作流</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>“AI-native 开发”这个词现在被用得很大，但大部分时候它只被当成“用没用 AI 写代码”来理解。这个理解是有问题的：一个人用 Copilot 补全几行代码，和一个人把整个需求丢给 Agent 然后只做验收，这两件事在工程上是完全不同的物种。混为一谈，会导致既高估了前者的收益，也低估了后者的代价。</p>
+<p>这篇文章想干一件事：把 AI-native 开发拆成一套可执行的工作流，讲清楚每一步人和 Agent 各干什么、边界在哪、哪里最容易翻车。</p>
+<p>（文中的 Agent 泛指 Claude Code、Cursor Agent、Codex 这类能自主读写文件、执行命令的工具，不特指某一家。）</p>
+<h2 id="一、先立定义：什么才算-AI-native"><a href="#一、先立定义：什么才算-AI-native" class="headerlink" title="一、先立定义：什么才算 AI-native"></a>一、先立定义：什么才算 AI-native</h2><p>判断标准不是“有没有用 AI”，而是这两个问题：</p>
+<ol>
+<li><strong>分解权在谁手里</strong>——把一个模糊需求拆成可执行步骤，这件事谁在做？</li>
+<li><strong>验证责任在谁手里</strong>——凭什么相信产出是对的？</li>
+</ol>
+<p>按这两条，可以把开发形态分成三档：</p>
+<table>
+<thead>
+<tr>
+<th>形态</th>
+<th>粒度</th>
+<th>分解权</th>
+<th>验证方式</th>
+<th>典型工具形态</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AI 辅助</td>
+<td>行 &#x2F; 函数</td>
+<td>人</td>
+<td>人读代码</td>
+<td>补全、单文件改写</td>
+</tr>
+<tr>
+<td>AI 协作</td>
+<td>任务</td>
+<td>人定任务，AI 定实现</td>
+<td>人审 diff</td>
+<td>对话框里改一个文件</td>
+</tr>
+<tr>
+<td>AI 原生</td>
+<td>目标</td>
+<td>AI 主导，人给约束</td>
+<td>自动化 + 人做事实核验</td>
+<td>能自己跑测试、自己改多文件的 Agent</td>
+</tr>
+</tbody></table>
+<p>关键差别在<strong>交付单元的粒度</strong>。补全的交付单元是几行代码，你天然会读；Agent 的交付单元可能是“一个新接口 + 迁移脚本 + 一堆测试”，几百行 diff，你<strong>不可能逐行读</strong>。所以 AI-native 的整个方法论，本质是回答一个问题：</p>
+<blockquote>
+<p>当我没法逐行审查产出时，我靠什么保证质量？</p>
+</blockquote>
+<p>答案只有两个：<strong>规格</strong>和<strong>验证</strong>。这也引出了全文的核心转变。</p>
+<h3 id="几个自检问题"><a href="#几个自检问题" class="headerlink" title="几个自检问题"></a>几个自检问题</h3><p>想判断自己是不是在做 AI-native，问自己：</p>
+<ul>
+<li>需求进来，第一反应是“我去写”，还是“我去描述清楚 + 想好怎么验收”？</li>
+<li>你对自己代码的信心，来自“我逐行读过”，还是“测试过了、也手动点过了”？</li>
+<li>你的瓶颈是打字速度，还是<strong>规格写得清不清楚</strong>？</li>
+</ul>
+<p>如果第三问的答案是“打字速度”，那你还在 AI 辅助阶段。AI-native 的瓶颈一定在规格和验证上。</p>
+<h3 id="一个反直觉点"><a href="#一个反直觉点" class="headerlink" title="一个反直觉点"></a>一个反直觉点</h3><p>AI-native 不是“少写代码”，是把工作量<strong>从键盘挪到了规格和验证</strong>。少了键盘那部分，多了规格和验证那部分，总量不一定减少，但<strong>产出结构和返工成本完全不同</strong>——方向对的时候快很多，方向错的时候也贵很多（因为错的东西是被批量生产出来的）。</p>
+<p>所以“省事”这个预期本身是错的。省下来的打字时间，应该全部投到“怎么描述清楚”和“怎么验出来”上。投入不足，就是又快又烂。</p>
+<h2 id="二、核心转变：规格是新的编程语言，验证是新的编译"><a href="#二、核心转变：规格是新的编程语言，验证是新的编译" class="headerlink" title="二、核心转变：规格是新的编程语言，验证是新的编译"></a>二、核心转变：规格是新的编程语言，验证是新的编译</h2><h3 id="2-1-规格是新的编程语言"><a href="#2-1-规格是新的编程语言" class="headerlink" title="2.1 规格是新的编程语言"></a>2.1 规格是新的编程语言</h3><p>给 Agent 的规格和给人写的需求文档不是一回事。人写需求文档，可以留模糊，因为下游的人是会自己补全常识的同事；Agent 不会补全，它会<strong>自信地按字面理解执行</strong>。</p>
+<p>一份能被 Agent 执行的规格，至少包含四块：</p>
+<ol>
+<li><strong>目标</strong>：要达成什么，用可观察的结果描述。不要写“优化一下性能”，要写“这个接口 P99 从 800ms 降到 200ms 以内”。</li>
+<li><strong>约束</strong>：什么不能动。现有的接口签名、数据结构、命名约定、依赖版本。<strong>约束比功能更重要</strong>，因为功能没做对会被测试拦住，约束被破坏了往往悄无声息。</li>
+<li><strong>验收标准</strong>：怎么算完成。理想情况是可执行的——一条能跑的命令、一个能点的页面、一条能看的数据。</li>
+<li><strong>明确不做什么</strong>：范围边界。Agent 天然倾向于“顺手多做点”，不划边界它会扩大战场。</li>
+</ol>
+<p>一个粗糙但有效的检验方式：<strong>把规格丢给另一个人，他能不能只靠这段话判断你做完了没有？</strong> 不能，就是规格没写够。</p>
+<h3 id="2-2-验证是新的编译"><a href="#2-2-验证是新的编译" class="headerlink" title="2.2 验证是新的编译"></a>2.2 验证是新的编译</h3><p>在传统开发里，编译器帮你挡住低级错误，所以你的注意力可以放在逻辑上。在 AI-native 里，<strong>验证就是那个编译器</strong>——它是唯一能拦住“看起来很对”的东西。</p>
+<p>两条不变量：</p>
+<ul>
+<li><strong>没有验证的产出等于没有产出。</strong> 不是“先合了再说”，是它根本不存在。</li>
+<li><strong>证据优于断言。</strong> 不接受“我已经改好了”“测试应该没问题”，只接受“这是命令和输出”。</li>
+</ul>
+<p>第二条值得展开，因为它违背人的社交直觉。人是倾向于相信口头承诺的，Agent 的语气又极其笃定。<strong>Agent 的自信程度和它的正确率没有相关性</strong>——这是整篇文章里最需要内化成肌肉记忆的一条。</p>
+<h2 id="三、工作流骨架"><a href="#三、工作流骨架" class="headerlink" title="三、工作流骨架"></a>三、工作流骨架</h2><p>把一次开发拆成五步。每一步都明确：Agent 干什么、人干什么、以及<strong>这一步出问题的信号是什么</strong>。</p>
+<blockquote>
+<p>📐 另有一份按<strong>研发全生命周期</strong>切的十阶段设计（十阶段能力地图 + 端到端执行流程图，逐节点可点开）→ <a href="/ai-native-fusion.html"><strong>《AI 原生研发 · 十阶段融合设计》</strong></a><br>它的框架参照 Anthropic 的 <strong><a target="_blank" rel="noopener" href="https://claude.com/blog/the-ai-native-sdlc-playbook">《The AI-native SDLC playbook》</a></strong>（Louis Claxton，2026-08-21）—— 想看上游原文，直接点这个。</p>
+</blockquote>
+<h3 id="3-1-探索：搞清楚现状"><a href="#3-1-探索：搞清楚现状" class="headerlink" title="3.1 探索：搞清楚现状"></a>3.1 探索：搞清楚现状</h3><p><strong>Agent 做</strong>：读代码、找调用链、定位相关文件、总结现有实现。这一步 Agent 比人快一个数量级，因为它可以毫无怨言地把 200 个文件翻一遍。</p>
+<p><strong>人做</strong>：定方向。告诉它“我们关心的是 A 这条路径，不是 B”，否则它会给你一份详尽但无用的全量报告。</p>
+<p><strong>翻车信号</strong>：Agent 在没有读任何代码的情况下就开始给方案。出现这种情况，说明你的指令里没有“先看，再说”，直接打断。</p>
+<blockquote>
+<p>这一步的产出是一份<strong>共识</strong>：你确认它理解了现状，而不是它猜对了现状。</p>
+</blockquote>
+<h3 id="3-2-计划：先看图纸再动工"><a href="#3-2-计划：先看图纸再动工" class="headerlink" title="3.2 计划：先看图纸再动工"></a>3.2 计划：先看图纸再动工</h3><p><strong>人做</strong>：审计划。这是整个流程里<strong>投入产出比最高的一次介入</strong>。计划阶段改一句话，等于实现阶段改一百行。</p>
+<p><strong>Agent 做</strong>：给出步骤、涉及文件、验证方式。</p>
+<p><strong>要看什么</strong>：不是看它写得对不对，是看<strong>有没有你没说过的假设</strong>。计划里的每一个“我假设……”，都是潜在的返工点。</p>
+<p><strong>翻车信号</strong>：计划里出现了你没要求的重构、没提过的依赖、范围明显膨胀。这时候砍掉，别想着“反正它自己会做”。</p>
+<h3 id="3-3-实现：Agent-的主力战场"><a href="#3-3-实现：Agent-的主力战场" class="headerlink" title="3.3 实现：Agent 的主力战场"></a>3.3 实现：Agent 的主力战场</h3><p><strong>Agent 做</strong>：写代码、改文件、跑命令、迭代。</p>
+<p><strong>人做</strong>：不打断，但设边界。提前说清楚哪些操作要先问（删文件、改依赖、动配置、联网、提交）。</p>
+<p><strong>翻车信号</strong>：</p>
+<ul>
+<li>同一类错误连续修三轮还没过——这不是在收敛，是在打转。停下来回滚重来，比继续 debug 便宜。</li>
+<li>diff 规模超出计划里说的范围——它跑偏了。</li>
+</ul>
+<h3 id="3-4-验证：这一步不能外包"><a href="#3-4-验证：这一步不能外包" class="headerlink" title="3.4 验证：这一步不能外包"></a>3.4 验证：这一步不能外包</h3><p><strong>人做</strong>：事实核验。跑一遍它说的命令，点一遍它说的页面，看一眼它说改了的地方。</p>
+<p><strong>Agent 做</strong>：提供证据。命令、输出、失败时的报错原文。</p>
+<p><strong>翻车信号</strong>：它说“测试通过”但给不出命令和输出。这就是纯断言，等同于没做。</p>
+<blockquote>
+<p>详见 4.3，验证是全文最容易自欺的一步。</p>
+</blockquote>
+<h3 id="3-5-交接：写给人看的东西"><a href="#3-5-交接：写给人看的东西" class="headerlink" title="3.5 交接：写给人看的东西"></a>3.5 交接：写给人看的东西</h3><p><strong>人做</strong>：提交信息、文档、给同事的解释。这部分<strong>不要外包给 Agent</strong>。</p>
+<p>原因很实际：这些东西的唯一读者是未来的你和你的同事，而未来你在读它的时候，需要的是<strong>当时的决策理由</strong>，不是对代码的复述。Agent 能写出准确的 diff 摘要，但写不出“为什么当时选了这个方案而不是那个”。</p>
+<p><strong>翻车信号</strong>：提交信息是“update files”或一段漂亮的废话。这说明结尾这一步没人管。</p>
+<h3 id="3-6-完整的执行流程"><a href="#3-6-完整的执行流程" class="headerlink" title="3.6 完整的执行流程"></a>3.6 完整的执行流程</h3><p>上面五步是压缩后的骨架。真实交付链上，每一步之间还夹着<strong>门禁</strong>和<strong>人的判断点</strong>——完整原版里把这条链路摊成了三列：AI 执行、规则门禁（Gate）、人的判断&#x2F;审批。</p>
+<p>这里最值得单独拎出来的是<strong>门禁的分层</strong>：规则检查交给机器（完整性、一致性、覆盖率阈值），意图与风险的判断留给人。这两件事要<strong>分开留证</strong>，并且都绑定到被批准的那个版本——否则“批过了”会退化成一个模糊的口头状态，既说不清批的是哪一版，也追不回是谁批的。</p>
+<blockquote>
+<p>完整原版里这条流程是<strong>逐节点可点开</strong>的 → <a href="/ai-native-fusion.html">《AI 原生研发 · 十阶段融合设计》</a></p>
+</blockquote>
+<h2 id="四、四个关键实践"><a href="#四、四个关键实践" class="headerlink" title="四、四个关键实践"></a>四、四个关键实践</h2><h3 id="4-1-上下文工程"><a href="#4-1-上下文工程" class="headerlink" title="4.1 上下文工程"></a>4.1 上下文工程</h3><p>Agent 的能力上限，很大程度取决于你喂了什么、以及<strong>你挡住了什么</strong>。</p>
+<p><strong>常驻上下文：项目约定文件（CLAUDE.md &#x2F; AGENTS.md 之类）</strong></p>
+<p>放<strong>代码里读不出来</strong>的东西：</p>
+<ul>
+<li>构建、测试、启动的准确命令（包括那些反直觉的参数）</li>
+<li>目录约定和分层规则</li>
+<li>禁止事项（“不要动 vendor&#x2F;”“不要引入新依赖”“不要用 X 库”）</li>
+<li>外部系统入口（测试环境地址、日志位置、相关仓库）</li>
+</ul>
+<p>不要放：目录树的复述、能从代码里读出来的架构描述、大段通用最佳实践。<strong>上下文里每一条不相关的信息，都在稀释相关信息的权重。</strong></p>
+<p><strong>三层结构</strong></p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>内容</th>
+<th>获取方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>常驻</td>
+<td>约定、禁区、命令</td>
+<td>约定文件，每轮都加载</td>
+</tr>
+<tr>
+<td>按需</td>
+<td>当前任务相关的文件</td>
+<td>明确指定，让它读</td>
+</tr>
+<tr>
+<td>检索</td>
+<td>全库搜索</td>
+<td>让它自己搜</td>
+</tr>
+</tbody></table>
+<p>原则：<strong>能靠搜索拿到的，不要常驻；会变的，不要写死。</strong> 常驻上下文应该是“稳定的、跨任务的、读代码看不出来的”。</p>
+<p><strong>反向操作同样重要</strong></p>
+<p>明确告诉它<strong>不要读什么</strong>。大仓库最大的浪费是它把时间花在翻无关目录上，然后把噪音带进上下文。给出排除范围，收益常常比多给资料更大。</p>
+<h3 id="4-2-任务切分与并行"><a href="#4-2-任务切分与并行" class="headerlink" title="4.2 任务切分与并行"></a>4.2 任务切分与并行</h3><p><strong>切分的唯一依据：能否独立验证。</strong></p>
+<p>不要按“功能模块”切，要按“可验证边界”切。两个任务如果共享同一个测试、同一份状态，并行只会互相污染。切到每个任务都能单独跑通验证，才算切对了。</p>
+<p><strong>共享状态是并行的敌人。</strong></p>
+<p>同一个文件的编辑、有先后依赖的迁移、互相引用的重构——这些都不该并行，只能串行。想并行，先做<strong>物理隔离</strong>：独立的 git worktree、独立的分支、独立的数据库 schema。</p>
+<p><strong>什么时候值得用子 Agent</strong></p>
+<ul>
+<li>任务是<strong>只读</strong>的（搜索、调研、代码审查）</li>
+<li>任务<strong>独立</strong>，不共享状态</li>
+<li>你<strong>只关心结论，不关心过程</strong>（它的探索过程会污染你的上下文，交给子 Agent 正好能隔离掉）</li>
+</ul>
+<p><strong>什么时候不要</strong></p>
+<ul>
+<li>同一批文件的修改</li>
+<li>需要来回对齐的协作型任务</li>
+<li>你自己都还没想清楚的事（这时候并行只是把混乱复制了 N 份）</li>
+</ul>
+<h3 id="4-3-验证优先"><a href="#4-3-验证优先" class="headerlink" title="4.3 验证优先"></a>4.3 验证优先</h3><p><strong>先写失败的测试，再让它实现。</strong></p>
+<p>TDD 在 AI-native 里比在传统开发里<strong>更</strong>值钱。原因很直接：Agent 太容易产出“看起来完成了”的东西了。一个先写好的、当前为红的测试，是唯一能证明它真的做了事、且做对的方法。没有测试，你只能在“它很自信”和“代码看起来没问题”之间做判断，这两个都不是证据。</p>
+<p><strong>三层验证，缺一不可</strong></p>
+<ol>
+<li><strong>自动化测试</strong>——能挡住回归，挡不住“测试测错了”</li>
+<li><strong>手动冒烟</strong>——点一遍关键路径。Agent 改的东西经常能用但<strong>用起来别扭</strong>，这个只有人能发现</li>
+<li><strong>事实核验</strong>——它说改了 A，你去看 A 到底改了没</li>
+</ol>
+<p>完整的参考设计把验证进一步拆成了三个<strong>互相独立的角色</strong>，比上面三层更严格：<strong>执行器</strong>边做边自验证（构建、检查、修复构成小闭环）；<strong>独立器</strong>用和实现无关的视角去审视，专门补“同源盲区”；<strong>AI 配置验证</strong>则检查提示词、规则、skill 的变更有没有让流程整体退化。</p>
+<p>第三条最容易被忽略：<strong>改了规则却不验证规则</strong>，等于把回归风险藏进了流程本身。你的规则、skill、配置都是代码，它们同样需要测试。</p>
+<p><strong>警惕同源验证。</strong></p>
+<p>让 Agent 自己验证自己的产出，等于没验证。它会用和写代码时完全相同的错误假设去检查代码。<strong>写和验最好不是同一个上下文</strong>——换个 Agent、换个会话、或者换成人。</p>
+<p><strong>“完成了”和“证明了”的区别</strong></p>
+<table>
+<thead>
+<tr>
+<th>说法</th>
+<th>可信度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>“我已经修复了这个问题”</td>
+<td>0，这是断言</td>
+</tr>
+<tr>
+<td>“我加了校验，应该不会再抛异常了”</td>
+<td>0，“应该”就是没跑过</td>
+</tr>
+<tr>
+<td>“跑 <code>npm test</code>，输出：<code>12 passed</code>，新增用例在 <code>test/foo.spec.ts:31</code>”</td>
+<td>可用，可复现</td>
+</tr>
+<tr>
+<td>你自己跑了一遍同样的命令，输出一致</td>
+<td>确认</td>
+</tr>
+</tbody></table>
+<p>只接受第三和第四种。</p>
+<h3 id="4-4-权限与边界"><a href="#4-4-权限与边界" class="headerlink" title="4.4 权限与边界"></a>4.4 权限与边界</h3><p>Agent 有能力做破坏性的事，因为它有 shell 和文件写权限。边界要提前设，不要事后追。</p>
+<p><strong>最小权限</strong></p>
+<p>能读的别给写，能预览的别给提交，能沙箱的别给真机。按任务临时提权，而不是一次给到底。</p>
+<p><strong>必须先确认的操作</strong></p>
+<ul>
+<li>删除文件或目录</li>
+<li><code>git push --force</code>、<code>reset --hard</code>、改历史</li>
+<li>动生产环境、动数据库</li>
+<li>任何把内容发到外部的动作（发请求、发邮件、推公开仓库）</li>
+<li>安装 &#x2F; 升级依赖</li>
+</ul>
+<p><strong>凭据</strong></p>
+<p>密钥、token、连接串不进 prompt，不进仓库，不进日志。需要凭据的操作让它引用环境变量，而不是把值告诉它。</p>
+<p><strong>隔离</strong></p>
+<p>不确定的操作用容器或临时目录。代价很低，但能避免“它把我工作区删了”这类不可逆事故。</p>
+<p><strong>留痕</strong></p>
+<p>谁改的、为什么改、什么时候—要能追溯。AI 产出混在人产出里且没有标注，几个月后没人分得清哪段是为什么写的。</p>
+<h2 id="五、常见失败模式"><a href="#五、常见失败模式" class="headerlink" title="五、常见失败模式"></a>五、常见失败模式</h2><table>
+<thead>
+<tr>
+<th>现象</th>
+<th>根因</th>
+<th>对策</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>说改了，其实没改</td>
+<td>幻觉 + 你没核验</td>
+<td>只认证据，不认断言</td>
+</tr>
+<tr>
+<td>说测试过了，其实没跑</td>
+<td>同上</td>
+<td>要求命令 + 输出原文</td>
+</tr>
+<tr>
+<td>长会话里目标被冲淡</td>
+<td>上下文漂移</td>
+<td>一个会话一个目标；漂了就开新会话</td>
+</tr>
+<tr>
+<td>改一处坏三处</td>
+<td>规格里没有约束</td>
+<td>约束前置；让它先列影响面</td>
+</tr>
+<tr>
+<td>diff 太大没人真看</td>
+<td>任务切太大</td>
+<td>按可验证边界重切</td>
+</tr>
+<tr>
+<td>同一个 bug 修了五轮</td>
+<td>方向错了打转</td>
+<td>及时回滚重来，别恋战</td>
+</tr>
+<tr>
+<td>方向错了却跑得很快</td>
+<td>计划阶段没人审</td>
+<td>计划是一次高杠杆介入点</td>
+</tr>
+<tr>
+<td>自动化全绿但功能不对</td>
+<td>测试和实现同源</td>
+<td>人做冒烟；换上下文做验证</td>
+</tr>
+<tr>
+<td>测试用例没价值，只是为了过关</td>
+<td>目标退化成“让测试变绿”，而不是“验证行为”</td>
+<td>先写会红的测试；断言行为而非实现</td>
+</tr>
+<tr>
+<td>队友看不懂 AI 提交的代码</td>
+<td>交接外包了</td>
+<td>决策理由人来写</td>
+</tr>
+</tbody></table>
+<p><strong>单独说一下“为了过关而写的测试”。</strong></p>
+<p>这是 AI-native 里最隐蔽的一种失败，因为它的表现不是报错，而是<strong>一片绿</strong>。Agent 写测试时的目标函数很容易悄悄退化：从“验证这段代码对不对”变成“让这条命令返回 0”。于是它会——断言实现细节（实现一改测试就碎）、写恒真的断言、绕开不好覆盖的分支，甚至在测试挂掉时<strong>去改测试而不是改代码</strong>。</p>
+<p>一片绿不代表被验证过，只代表有人写出了能让它绿的代码。</p>
+<p>判断方法很简单：<strong>这个测试红过吗？</strong> 一个从来没红过的测试，等价于没有测试。所以“先写会失败的测试、再让它实现”这个顺序不能反——这不只是工程习惯，它是<strong>唯一能证明测试本身有约束力</strong>的办法。</p>
+<h2 id="六、落地清单"><a href="#六、落地清单" class="headerlink" title="六、落地清单"></a>六、落地清单</h2><p><strong>开工前</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> 目标写成了可观察的结果（不是“优化一下”）</li>
+<li><input disabled="" type="checkbox"> 写清楚约束：不能动什么</li>
+<li><input disabled="" type="checkbox"> 写清楚验收标准：跑什么命令 &#x2F; 点什么页面算过</li>
+<li><input disabled="" type="checkbox"> 划范围：明确不做什么</li>
+<li><input disabled="" type="checkbox"> 确认仓库里有约定文件（命令、禁区、目录规则）</li>
+</ul>
+<p><strong>实现中</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> 计划看过了，尤其看有没有你没说过的假设</li>
+<li><input disabled="" type="checkbox"> 危险操作设了确认门槛</li>
+<li><input disabled="" type="checkbox"> 任务按可验证边界切分，共享状态的任务不同时跑</li>
+<li><input disabled="" type="checkbox"> 连续三轮同一类错误不过 → 停下回滚，不要继续钻</li>
+</ul>
+<p><strong>收尾</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> 测试自己跑过一遍，输出我看过</li>
+<li><input disabled="" type="checkbox"> 关键路径手点过一遍</li>
+<li><input disabled="" type="checkbox"> 它说改的地方，抽查过几处确实改了</li>
+<li><input disabled="" type="checkbox"> 提交信息和文档由人写，说清<strong>为什么</strong></li>
+<li><input disabled="" type="checkbox"> 这次产生的可复用约定，回写进约定文件</li>
+</ul>
+<h2 id="七、面试视角"><a href="#七、面试视角" class="headerlink" title="七、面试视角"></a>七、面试视角</h2><p>这个话题在面试里越来越常见，尤其是做 Agent 相关岗位。答好它的关键不是展示你用过多少工具，而是展示<strong>你如何控制质量</strong>。</p>
+<p><strong>高频问题</strong></p>
+<ul>
+<li>你用 AI 写代码，怎么保证质量？</li>
+<li>AI 产生幻觉、编造代码怎么办？</li>
+<li>你怎么划分人和 AI 的边界？</li>
+<li>团队里怎么落地这套东西？</li>
+</ul>
+<p><strong>答题骨架：规格 → 验证 → 边界 → 度量</strong></p>
+<ol>
+<li><strong>规格</strong>：我怎么把需求变成 Agent 能执行的规格，约束和验收标准怎么定</li>
+<li><strong>验证</strong>：自动化 + 人工冒烟 + 事实核验三层；不接受断言只接受证据；写和验不同源</li>
+<li><strong>边界</strong>：什么交给 Agent、什么必须人做；危险操作的确认门槛</li>
+<li><strong>度量</strong>：怎么知道这套流程是有效的——返工率、diff 审查时长、线上缺陷来源占比</li>
+</ol>
+<p><strong>加分点</strong></p>
+<ul>
+<li>主动讲<strong>代价</strong>：审查成本上升、上下文维护成本、团队约定需要持续投入。只讲好处会显得你只停在“觉得很爽”的阶段。</li>
+<li>能区分“AI 辅助”和“AI-native”的粒度差异，并解释为什么粒度一变，方法论就必须变（因为无法逐行审查了）。</li>
+<li>提到<strong>可回滚性</strong>：AI-native 里“快速产出一版正确的”固然好，但更重要的是“快速发现并撤销一版错误的”。</li>
+</ul>
+<p><strong>减分点</strong></p>
+<ul>
+<li>只说工具名，说不出质量控制。</li>
+<li>“AI 写的代码我都会逐行 review”——如果真是这么大的产出量，这句话要么不成立，要么说明你把 AI 用成了补全。</li>
+<li>回避代价，把它讲成纯收益。</li>
+</ul>
+<p>相关笔记可以配合 <a href="/2026/05/20/ai/Agent-RAG-MCP-Skills/">《Agent、RAG、MCP 与 Skills 知识整理》</a> 一起看，那篇偏 Agent 侧的实现细节，本篇偏使用侧的工作流。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>AI-native 开发的本质，是把工作重心从<strong>写</strong>转移到<strong>描述</strong>和<strong>验证</strong>。</p>
+<ul>
+<li>规格是新的编程语言：模糊的规格会被自信地执行成错误的东西</li>
+<li>验证是新的编译：没有验证的产出等于没有产出</li>
+<li>证据优于断言：Agent 的自信程度和正确率不相关</li>
+<li>边界要前置：不可逆的事，提前设门槛</li>
+<li>交接不能外包：为什么做这个决定，只有人能写</li>
+</ul>
+<p>最后一条也是最容易被忽略的：<strong>这套流程的瓶颈永远在人身上</strong>。Agent 已经足够快，快到你如果没想清楚，它会很快地把你带到错误的地方。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><p><strong>Anthropic，《The AI-native SDLC playbook》</strong>（Louis Claxton，2026-08-21）—— <a target="_blank" rel="noopener" href="https://claude.com/blog/the-ai-native-sdlc-playbook">claude.com&#x2F;blog&#x2F;the-ai-native-sdlc-playbook</a></p>
+<p>第三章提到的那份十阶段设计，框架参照自这份 playbook。想看 Anthropic 自己怎么描述 AI 原生研发流程，直接读原文。</p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Ai/" class="category-chain-item">Ai</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI-native/" class="print-no-link">#AI-native</a>
+      
+        <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" class="print-no-link">#工作流</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/" class="print-no-link">#工程实践</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>AI-native 开发工作流</div>
+      <div>https://kyy-logs.github.io/2026/10/01/ai/AI-Native-Dev-Workflow/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Yangyang Kong</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年10月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/10/01/%E5%9C%BA%E6%99%AF%E9%A2%98/%E5%9C%BA%E6%99%AF%E9%A2%98-%E9%9D%A2%E8%AF%95%E7%9C%9F%E9%A2%98/" title="场景题-面试真题">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">场景题-面试真题</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/05/20/ai/%E9%9D%A2%E8%AF%95%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/" title="面试遇到的问题（已合并）">
+                        <span class="hidden-mobile">面试遇到的问题（已合并）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"kyy-logs/review-repository","repo-id":"R_kgDOR9LLEQ","category":"General","category-id":"DIC_kwDOR9LLEc4C6Yb2","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

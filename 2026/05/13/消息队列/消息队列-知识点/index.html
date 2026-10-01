@@ -29,7 +29,7 @@
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20250908204336758-1778645356638.png">
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20250912171437086-1778645356638.png">
 <meta property="article:published_time" content="2026-05-13T02:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-13T04:12:28.352Z">
+<meta property="article:modified_time" content="2026-10-01T03:34:10.780Z">
 <meta property="article:author" content="Yangyang Kong">
 <meta property="article:tag" content="消息队列">
 <meta property="article:tag" content="面试">
@@ -389,7 +389,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          8.5k 字
+          14k 字
         
       </span>
     
@@ -400,7 +400,7 @@
         
         
         
-          71 分钟
+          116 分钟
         
       </span>
     
@@ -887,6 +887,213 @@
 <p>所谓幂等性，就是<strong>同一条消息，无论你处理 1 次还是 100 次，对业务系统的结果都是一样的</strong>。</p>
 <p><strong>敲黑板：Kafka 本身无法 100% 避免这种场景下的重复投递（它提供的是 At Least Once 语义）。解决重复消费的终极防线，必须落在业务代码的“幂等性（Idempotence）”设计上。</strong></p>
 <p>所谓幂等性，就是<strong>同一条消息，无论你处理 1 次还是 100 次，对业务系统的结果都是一样的</strong>。</p>
+<h2 id="面试真题"><a href="#面试真题" class="headerlink" title="面试真题"></a>面试真题</h2><h3 id="如果MQ因为网络等原因，发送消息延迟，如何优化？"><a href="#如果MQ因为网络等原因，发送消息延迟，如何优化？" class="headerlink" title="如果MQ因为网络等原因，发送消息延迟，如何优化？"></a>如果MQ因为网络等原因，发送消息延迟，如何优化？</h3><p>“MQ 发送延迟是典型的生产问题，我的优化思路会遵循**‘端-架-网’（客户端-架构-网络）**三层递进的策略。</p>
+<p><strong>第一层，在客户端（Producer）层面做快速失败与容错。</strong><br>我会强制要求设置一个严格的<mark><strong>发送超时时间</strong>（</mark>比如 2 秒），并配置<strong>带指数退避的重试机制</strong>。对于<mark>非核心链路，坚决采用<strong>异步发送+回调</strong></mark>的模式，让业务线程立即返回，不被网络 I&#x2F;O 阻塞。</p>
+<p><mark><strong>第二层，在业务架构层面做彻底解耦。</strong></mark><br>如果短暂的客户端优化扛不住持续的网络问题，我会引入**‘可靠事件模式’<strong>。即将消息先</strong>暂存到本地数据库的一张消息表里**，然后由一个独立的后台任务去异步轮询这张表，再慢慢地发送给远端的 MQ。这样，主业务流程的性能就和网络状况完全隔离了。同时，我会配合<strong>熔断器</strong>，在极端情况下对非核心的 MQ 发送逻辑进行降级。</p>
+<h3 id="MQ中的脏数据怎么处理？"><a href="#MQ中的脏数据怎么处理？" class="headerlink" title="MQ中的脏数据怎么处理？"></a>MQ中的脏数据怎么处理？</h3><p>在 MQ 的语境下，“脏数据”通常分为两类：</p>
+<ol>
+<li><strong>格式型脏数据（Poison Pill &#x2F; 毒药消息）：</strong> JSON 格式残缺、字段类型错乱（本来是 Long 传了 String），导致消费者在反序列化或解析时直接抛出异常。</li>
+<li><strong>业务型脏数据：</strong> 格式没问题，但违反业务规则（例如订单金额为负数、引用的 UserID 在数据库不存在），导致执行业务 SQL 时报错。</li>
+</ol>
+<p>“处理 MQ 中的脏数据，我们的核心底线是<strong>绝对不能让脏数据引起无限重试，从而阻塞正常消息的消费（即防止毒药消息效应）。</strong></p>
+<p>我们的标准架构方案是建立<strong>死信队列（DLQ）机制</strong>。</p>
+<ol>
+<li>在消费端，我们会使用全局 Try-Catch 捕获包括反序列化在内的所有异常。</li>
+<li>当一条消息解析失败，或者业务处理重试达到上限（如 3 次）时，消费者会主动 ACK 这条消息使其脱离主队列，并将其原始 Payload 和异常堆栈一起投递到专门的<strong>死信队列</strong>中。</li>
+<li>针对死信队列，我们会配置<strong>严格的监控告警</strong>。一旦出现死信，开发人员会收到钉钉告警。</li>
+<li>我们内部有一个 <strong>MQ 死信排查控制台</strong>，开发人员可以在上面查看脏数据的原因。如果是数据个例，可以手工修改 Payload 后点击重发；如果是系统 Bug，我们会修复消费者代码兼容后，通过脚本将死信队列的数据批量重新投递回主队列完成补偿。</li>
+</ol>
+<h3 id="mq的消息持久化存储这个原理是啥"><a href="#mq的消息持久化存储这个原理是啥" class="headerlink" title="mq的消息持久化存储这个原理是啥"></a>mq的消息持久化存储这个原理是啥</h3><p><strong>三、 消息持久化的核心原理是什么？（How）</strong></p>
+<p>虽然不同 MQ 的实现细节有差异，但其核心原理万变不离其宗，主要围绕着 <strong>“先落盘，再响应”</strong> 和 <strong>“高性能的磁盘 I&#x2F;O 操作”</strong> 这两个关键点。</p>
+<p><strong>1. 核心流程：“先落盘，再响应”</strong></p>
+<p>这是一个保证消息不丢失的黄金法则。整个流程如下：</p>
+<ol>
+<li><strong>生产者（Producer）发送消息</strong>：生产者在发送消息时，通常会指定这条消息需要被持久化。</li>
+<li><strong>MQ Broker 接收消息</strong>：Broker 收到消息后，并不会立即把它放到内存队列里就完事了。</li>
+<li><strong>写入持久化存储</strong>：Broker 会将消息写入到磁盘上的日志文件（Log File）或数据存储中。</li>
+<li><strong>返回确认（ACK）</strong>：<mark><strong>只有当消息成功写入磁盘后</strong></mark>，Broker 才会向生产者发送一个确认（ACK），告诉生产者：“我已经收到并安全保存了你的消息”。</li>
+<li><strong>投递给消费者（Consumer）</strong>：Broker 从持久化存储中读取消息（或直接从内存缓存），然后投递给消费者。</li>
+<li><strong>消费者确认消费</strong>：消费者处理完消息后，向 Broker 发送一个消费确认（ACK）。</li>
+<li><strong>更新状态</strong>：Broker 收到消费确认后，会将这条消息在存储中标记为“已消费”（具体是直接删除还是仅仅移动一个指针，取决于 MQ 的实现），从而释放存储空间。</li>
+</ol>
+<p><strong>关键点</strong>：如果在第 3 步写磁盘成功之前 Broker 宕机了，生产者因为没有收到 ACK，就会认为消息发送失败，从而进行重试。这样就保证了消息至少会被成功持久化一次。</p>
+<p><strong>2. 核心技术：如何实现高性能的磁盘写入？</strong></p>
+<p>你可能会问：每次都写磁盘，性能不会很差吗？毕竟磁盘 I&#x2F;O 是出了名的慢。</p>
+<p>优秀的 MQ 产品都采用了一系列优化技术来解决这个问题，主要有以下几种：</p>
+<p><mark><strong>a. 顺序写（Sequential I&#x2F;O）</strong></mark></p>
+<ul>
+<li><strong>原理</strong>：磁盘的性能瓶颈主要在于磁头的随机寻道（Random Access）。而顺序读写的速度非常快，甚至可以逼近内存的读写速度。</li>
+<li><strong>应用</strong>：像 Kafka 和 RocketMQ 这样的 MQ，它们的设计哲学就是将所有消息以 <strong>追加（Append-Only）</strong> 的方式写入一个或多个大的日志文件中。新消息总是写在文件的末尾，这是一个纯粹的顺序写操作，性能极高。它们不会去修改文件中间的某条消息。</li>
+</ul>
+<p><mark><strong>b. 操作系统的页缓存（Page Cache）</strong></mark></p>
+<ul>
+<li><strong>原理</strong>：现代操作系统为了加速 I&#x2F;O，并不会让应用程序的 write 操作直接写入物理磁盘。相反，数据会先被写入到内核空间的内存——<strong>页缓存（Page Cache）</strong> 中。这个过程非常快，几乎是纯内存操作。操作系统会后续通过一个后台线程（如 pdflush）将这些“脏页”异步地刷写（Flush）到物理磁盘上。</li>
+<li><strong>应用</strong>：MQ Broker 把消息写入文件，实际上是先写入了 Page Cache。对于 Broker 而言，写入操作瞬间完成，可以立即给生产者返回 ACK。这样既保证了高性能，又利用了操作系统的机制来保证数据最终会落盘。</li>
+</ul>
+<p><mark><strong>c. 刷盘策略（Flush Strategy）</strong></mark></p>
+<ul>
+<li><strong>问题</strong>：只写入 Page Cache 还是有风险的。如果在数据从 Page Cache 刷到磁盘之前，整个服务器断电了，那么 Page Cache 中的数据就会丢失。</li>
+<li><strong>解决方案</strong>：MQ 提供了不同的刷盘策略，让用户在<strong>性能</strong>和<strong>可靠性</strong>之间做权衡。<ul>
+<li><mark><strong>同步刷盘（Synchronous Flush）</strong></mark>：每次消息写入 Page Cache后，立即强制调用 fsync 或 fdatasync 系统调用，强迫操作系统将数据从 Page Cache 写入物理磁盘。这种方式最可靠，但性能最差。适用于金融等对数据一致性要求极高的场景。</li>
+<li><mark><strong>异步刷盘</mark>（Asynchronous Flush）</strong>：写入 Page Cache 后就返回成功，由操作系统自行决定何时刷盘。这种方式性能最好，但断电时可能会丢失少量数据（Page Cache 中未刷盘的数据）。这是大多数场景下的默认选择。</li>
+<li><mark><strong>定时或定量刷盘</strong>：</mark>比如“每写入 N 条消息后刷盘一次”或“每隔 T 秒刷盘一次”，是一种折中的方案。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Rabbit-mq的队列是怎么实现的？"><a href="#Rabbit-mq的队列是怎么实现的？" class="headerlink" title="Rabbit mq的队列是怎么实现的？"></a>Rabbit mq的队列是怎么实现的？</h3><p><strong>一、 宏观架构：队列在 RabbitMQ 中到底是个什么实体？</strong></p>
+<p>在 RabbitMQ 中，一个队列（Queue）并不是像 Java 里的 LinkedList 那样简单的一块内存，而是一个<strong>由 Erlang 语言实现的、独立的轻量级进程（Erlang Process）</strong>。</p>
+<p><strong>1. Actor 模型与 Erlang 进程</strong></p>
+<ul>
+<li><strong>背景：</strong> RabbitMQ 是用 <mark>Erlang 语言</mark>写的。Erlang 采用了 <strong>Actor 并发模型</strong>，它的核心执行单元是“轻量级进程”（比操作系统的线程还要轻量级得多，一台机器上可以轻松跑几百万个 Erlang 进程）。</li>
+<li><strong>队列的本质：</strong> 每个 RabbitMQ 队列，本质上就是一个<mark>独立运行的 Erlang 进程</mark>（称为 Queue Process）**。</li>
+<li><strong>工作机制：</strong> 当有消息发送到这个队列时，实际上是给这个 Erlang 进程发了一条“异步消息”。这个进程拥有自己的状态（<mark>内存中的消息、元数据</mark>）和自己的邮箱（Mailbox），它按照单线程的模式串行处理收到的消息，以此保证队列内部消息的<strong>严格顺序性</strong>。</li>
+</ul>
+<p><strong>2. 队列的内部结构（职责拆分）</strong></p>
+<p>一个 Queue 进程为了高效运转，内部又分为几个核心组件（模块）：</p>
+<ul>
+<li><strong>Q1, Q2, Delta, Q3, Q4：</strong> 这是 RabbitMQ 为了平衡内存和磁盘而设计的 5 个内部状态区间。<ul>
+<li><strong>Q1, Q4：</strong> 完全在内存中的消息。</li>
+<li><strong>Q2, Q3：</strong> 正在内存和磁盘之间换入换出的消息。</li>
+<li><strong>Delta：</strong> 完全存放在磁盘上的消息。</li>
+</ul>
+</li>
+<li><strong>Backing Queue：</strong> 这是队列真正存放消息数据的底层数据结构，负责将消息在上述 5 个状态之间进行流转（比如当内存不足时，把 Q1 的消息降级存入磁盘变 Delta）。</li>
+</ul>
+<p><strong>二、 存储机制：消息是怎么存下来的？（内存 vs 磁盘）</strong></p>
+<p>队列的实现必须解决“持久化”和“内存溢出”的问题。RabbitMQ 针对这两点有精妙的设计。</p>
+<p><strong>1. 持久化机制 (Persistence)</strong></p>
+<p>如果队列声明为 durable&#x3D;true，且消息标记为 delivery_mode&#x3D;2（持久化），消息就会落盘。</p>
+<ul>
+<li><strong>存储引擎：</strong> RabbitMQ 并没有使用 MySQL 等关系型数据库，而是自己实现了一个极其高效的<mark><strong>追加写入式（Append-Only）文件存储系统</strong></mark>。</li>
+<li><strong>两个核心文件：</strong><ul>
+<li><strong>Msg Store（消息存储）：</strong> 所有队列共享。当消息比较大（默认 &gt; 4096 字节）时，无论是否需要持久化，都会被写入这个统一的消息存储文件中。它分为 msg_store_persistent（持久化消息）和 msg_store_transient（非持久化但因内存不足被换出的消息）。</li>
+<li><strong>Queue Index（队列索引）：</strong> 每个队列独有。它记录了本队列中每一条消息在 Msg Store 中的物理偏移量（Offset）和状态。如果消息很小，为了极致性能，RabbitMQ 会直接把消息内容也塞进这个 Index 文件里。</li>
+</ul>
+</li>
+</ul>
+<p><strong>2. 内存控制与 Paging (换页机制)</strong></p>
+<p>如果消费者罢工，队列里堆积了 1 亿条消息，RabbitMQ 会 OOM（内存溢出）吗？</p>
+<ul>
+<li><strong>答案：不会。</strong> 这得益于 RabbitMQ 优秀的 <mark><strong>Paging（换页）机制</strong></mark>。</li>
+<li>当 Erlang 虚拟机的内存使用量达到配置的阈值（如物理内存的 40%）时，RabbitMQ 会触发内存告警。</li>
+<li>此时，后台进程会疯狂地将内存中的消息（即便是非持久化的消息）<strong>换出（Page Out）到磁盘上</strong>，释放内存。只有当消费者真正需要消费时，才会把磁盘上的数据重新换入（Page In）内存。这个过程类似于操作系统的虚拟内存 Swap 机制。</li>
+</ul>
+<h3 id="Kafka如何保持高流量，高可用"><a href="#Kafka如何保持高流量，高可用" class="headerlink" title="Kafka如何保持高流量，高可用"></a>Kafka如何保持高流量，高可用</h3><p><strong>1. 顺：<mark>顺序读写磁盘</mark>（Sequential I&#x2F;O）</strong></p>
+<p>很多人有个误区，认为“写磁盘一定很慢，写内存才快”。其实不然。</p>
+<ul>
+<li><strong>磁盘的物理特性</strong>：磁盘慢是慢在“随机寻道”（磁头到处找地方写）。如果是<strong>顺序写</strong>（一直往文件末尾追加数据），普通的机械硬盘速度可以达到 600MB&#x2F;s，甚至逼近内存的随机读写速度。</li>
+<li><strong>Kafka 的做法</strong>：Kafka 的消息是以日志（Log）的形式存储的。生产者发来消息，Kafka 只做一件事：<mark><strong>把消息追加（Append）到日志文件的末尾</strong></mark>。它绝对不去修改之前的消息，也不去删除中间的消息。这种纯粹的顺序写，让它榨干了磁盘的性能。</li>
+<li><em>比喻：就像写日记，你只在最后一页往下写，绝对不翻到前面去涂改，速度当然快。</em></li>
+</ul>
+<p><strong>2. 借：借用操作系统的页缓存（Page Cache）</strong></p>
+<p>Java 程序通常会把对象存在 JVM 堆内存里，但这会带来沉重的垃圾回收（GC）负担，而且内存有限。</p>
+<ul>
+<li><strong>Kafka 的做法</strong>：Kafka <strong>尽量不在 JVM 里缓存消息</strong>，而是直接把数据扔给操作系统的<strong>页缓存（Page Cache）</strong>。</li>
+<li>操作系统的内核会接管这些内存，当你写入消息时，其实是写到了内存（Page Cache）里，内核会异步地把它们刷入磁盘。</li>
+<li>当你读取消息时，如果正好在 Page Cache 里，就直接从内存读走，连磁盘都不用碰。</li>
+<li><em>结果：Kafka 几乎是在享受纯内存级别的读写速度，同时又避免了 Java GC 带来的卡顿。</em></li>
+</ul>
+<p><strong>3. 零：零拷贝技术（Zero-Copy）</strong></p>
+<p>这正好呼应了你上一个问题！消费者来拉取消息时，Kafka 大量使用了零拷贝技术（sendfile 系统调用）。</p>
+<ul>
+<li><strong>传统方式</strong>：磁盘 -&gt; 内核缓存 -&gt; Kafka 应用程序 -&gt; Socket 缓存 -&gt; 网卡。中间经过多次 CPU 拷贝。</li>
+<li><strong>Kafka 的做法</strong>：数据直接从<strong>操作系统的 Page Cache</strong> 发送到 <strong>网卡的 Socket 缓冲区</strong>。</li>
+<li><em>结果：数据根本不经过 Kafka 这个 Java 应用程序的内部，极大地节省了 CPU 资源和内存带宽。CPU 只需要在一旁指挥，网络传输效率拉满。</em></li>
+</ul>
+<p><mark><strong>4. 分：分区架构（Partition）—— 真正的水平扩展</strong></mark></p>
+<ul>
+<li>如果一个 Topic（主题）所有的消息都挤在一台机器上，吞吐量必有上限。</li>
+<li>Kafka 将一个 Topic 拆分成多个 <strong>Partition（分区）</strong>，分散在不同的机器（Broker）上。</li>
+<li><em>结果：成百上千个生产者可以同时向不同的分区写数据，成百上千个消费者可以同时从不同的分区读数据。这是 Kafka 应对海量并发的架构基石。</em></li>
+</ul>
+<p><strong>零拷贝（Zero-Copy）</strong></p>
+<p><strong>“面试官您好，所谓‘零拷贝’，其实是一个容易让人误解的词。它并不是指数据在计算机里完全不需要拷贝，而是指：在数据的传输过程中，彻底消除【CPU】参与的、在【内核空间】与【用户空间】之间不必要的数据搬运。它的核心目的是解放 CPU，并减少昂贵的上下文切换。”</strong></p>
+<p><strong>一、 传统 I&#x2F;O 的性能瓶颈</strong></p>
+<p>当应用程序通过网络发送磁盘文件时，传统方式调用 read() 和 write()：</p>
+<ol>
+<li><strong>DMA拷贝</strong>：磁盘 -&gt; 内核页缓存（Page Cache）。</li>
+<li><strong>CPU拷贝</strong>：内核页缓存 -&gt; 用户缓冲区（User Buffer）。</li>
+<li><strong>CPU拷贝</strong>：用户缓冲区 -&gt; 内核 Socket 缓冲区。</li>
+<li><strong>DMA拷贝</strong>：内核 Socket 缓冲区 -&gt; 网卡（NIC）。</li>
+</ol>
+<p><strong>总开销</strong>：</p>
+<ul>
+<li><strong>4 次数据拷贝</strong>（2次 DMA 拷贝 + 2次 CPU 拷贝）。</li>
+<li><strong>4 次上下文切换</strong>（系统调用导致的 User-Kernel 状态切换）。<br><strong>瓶颈</strong>：极大地浪费了 CPU 算力和内存带宽，特别是在高并发的文件分发场景下。</li>
+</ul>
+<p><strong>3. sendfile + SG-DMA (真正的零拷贝，Linux 2.4+)</strong></p>
+<ul>
+<li><strong>原理</strong>：依赖支持 <strong>Scatter-Gather (分散-聚集)</strong> 功能的网卡 DMA 控制器。</li>
+<li><strong>流程</strong>：<ol>
+<li>DMA 将数据从磁盘读到 Page Cache。</li>
+<li>CPU 不再搬运数据，仅将包含<strong>数据位置和长度</strong>的文件描述符追加到 Socket 缓冲区。</li>
+<li>SG-DMA 控制器根据描述符，<mark><strong>直接从 Page Cache 读取数据发送到网卡</strong></mark>。</li>
+</ol>
+</li>
+<li><strong>性能提升</strong>：<strong>0 次 CPU 拷贝</strong>，2 次 DMA 拷贝，2 次上下文切换。达到性能理论极限。</li>
+</ul>
+<h3 id="RabbitMQ-的-Vhost-是做什么的？"><a href="#RabbitMQ-的-Vhost-是做什么的？" class="headerlink" title="RabbitMQ 的 Vhost 是做什么的？"></a>RabbitMQ 的 Vhost 是做什么的？</h3><p>如果打个比方，<strong>一个 RabbitMQ Server 就像是一台物理服务器，而 Vhost 就像是在这台服务器上划分出的一个个独立的虚拟机（或者像 MySQL 里的一个个 Database Schema）。</strong></p>
+<ul>
+<li>逻辑隔离 (Logical Isolation) - 绝对的核心作用**</li>
+</ul>
+<h3 id="kafka有啥特性相对于RabbitMq"><a href="#kafka有啥特性相对于RabbitMq" class="headerlink" title="kafka有啥特性相对于RabbitMq"></a><mark>kafka有啥特性相对于RabbitMq</mark></h3><p><strong>1. 极致的吞吐量与性能 (Throughput) —— Kafka 的绝对统治区</strong></p>
+<p>这是 Kafka 最著名的标签，也是它在大数据领域不可替代的原因。</p>
+<ul>
+<li><strong>RabbitMQ 的瓶颈：</strong> 它使用 Erlang 语言开发，为了保证消息的绝对可靠和复杂的路由计算，它的内存和 CPU 开销较大。单机吞吐量通常在<strong>万级&#x2F;秒</strong>。</li>
+<li><strong>Kafka 为什么快（百万级&#x2F;秒）？</strong><br>Kafka 放弃了复杂的路由逻辑，采用了极其硬核的底层优化：<ol>
+<li><strong>磁盘顺序写 (Sequential I&#x2F;O)：</strong> Kafka 不像传统数据库那样随机修改磁盘数据。所有的消息只会在文件末尾<strong>追加（Append-only）</strong>。在普通的机械硬盘上，顺序写的速度（可达 600MB&#x2F;s）完全可以媲美甚至超越内存的随机写。</li>
+<li><strong>零拷贝技术 (Zero-Copy)：</strong> 在消费者拉取数据时，Kafka 直接使用操作系统的 sendfile() 系统调用。数据直接从磁盘的 Page Cache 拷贝到网卡，<strong>全程不经过用户态的 JVM 内存</strong>，极大地节省了 CPU 资源和内存带宽。</li>
+<li><strong>批量发送 (Batching)：</strong> 无论生产者还是消费者，Kafka 都是按批次（Batch）处理消息的，这极大地减少了网络 RPC 的开销。</li>
+</ol>
+</li>
+</ul>
+<p><strong>2. 数据的持久化与可回溯性 (Retention &amp; Replay) —— 截然不同的消费模型</strong></p>
+<ul>
+<li><strong>RabbitMQ（阅后即焚）：</strong> 它采用的是**“推送模型 (Push)”<strong>。消息一旦被消费者成功消费（Ack），就会立即从队列中</strong>物理删除**。它就像一个水管，水流过去就没了。</li>
+<li><strong>Kafka（持久化日志）：</strong> 它采用的是**“拉取模型 (Pull)”**。Kafka 把所有的消息当成日志，持久化在磁盘上。<ul>
+<li><mark><strong>消息不删除：</strong> 消费者读取消息后，Kafka <strong>绝对不会删除它</strong>。消息的生命周期只由配置的保留策略（如保留 7 天或保留 100GB）决定。</mark></li>
+<li><strong>游标机制 (Offset)：</strong> Kafka 只记录每个消费者组当前读到了哪个位置（Offset）。</li>
+<li><mark><strong>核心优势（可回溯&#x2F;Replay）：</strong> 这意味着，如果你的下游消费者代码写出了 Bug，导致算错了昨天一整天的数据。在 Kafka 中，你只需要把消费者的 Offset <strong>重置（Reset）到昨天零点</strong>，就可以把昨天的所有消息<strong>重新消费一遍</strong>。这在数据分析和排错时是无价之宝，而 RabbitMQ 根本做不到。</mark></li>
+</ul>
+</li>
+</ul>
+<h3 id="简单描述就是如果保证MQ在MQ层不丢失，不太会我只知道强行在生产者中写入硬盘，但是面试官说这是业务层，他想知道在MQ层的不丢失怎么，最后告诉我用Raft一致性算法（完全不了解）"><a href="#简单描述就是如果保证MQ在MQ层不丢失，不太会我只知道强行在生产者中写入硬盘，但是面试官说这是业务层，他想知道在MQ层的不丢失怎么，最后告诉我用Raft一致性算法（完全不了解）" class="headerlink" title="简单描述就是如果保证MQ在MQ层不丢失，不太会我只知道强行在生产者中写入硬盘，但是面试官说这是业务层，他想知道在MQ层的不丢失怎么，最后告诉我用Raft一致性算法（完全不了解）"></a>简单描述就是如果保证MQ在MQ层不丢失，不太会我只知道强行在生产者中写入硬盘，但是面试官说这是业务层，他想知道在MQ层的不丢失怎么，最后告诉我用Raft一致性算法（完全不了解）</h3><p>“要保证 MQ 服务端不丢失消息，必须采用**<mark>高可用的集群架构</mark><strong>，通过</strong>主从复制**模型实现数据冗余。</p>
+<p>具体来说，当生产者将消息发送给 Leader 节点后，我们<strong>不能立即返回成功</strong>。而是需要 Leader 将消息同步复制给集群中的多个 Follower 节点。</p>
+<p>为了确保这个复制过程的正确性和一致性，我们可以采用像 <strong>Raft</strong> 或 <strong>ZAB</strong> (ZooKeeper 使用的) 这样的<strong>共识协议</strong>。</p>
+<p>在 Raft 协议的驱动下，只有当一条消息被成功复制到<strong>超过半数</strong>的节点，并被标记为‘已提交’状态后，MQ 服务端才会向生产者确认消息发送成功。</p>
+<p>这样做的好处是，只要集群中还有超过一半的节点存活，即使原先的 Leader 节点宕机，系统也能通过选举机制，从拥有最新数据的 Follower 中选出一个新的 Leader，从而保证了已经确认成功的消息<strong>一条都不会丢失</strong>。”</p>
+<p>#PDD</p>
+<h3 id="RabbitMQ是否会出现重复消息的投递的现象，就是消费完了"><a href="#RabbitMQ是否会出现重复消息的投递的现象，就是消费完了" class="headerlink" title="RabbitMQ是否会出现重复消息的投递的现象，就是消费完了"></a>RabbitMQ是否会出现重复消息的投递的现象，就是消费完了</h3><p><mark><strong>1. 最常见的场景：ACK 确认丢失 (The Lost ACK)</strong></mark></p>
+<ul>
+<li><strong>流程：</strong><ol>
+<li>消费者从 RabbitMQ 成功拉取到消息。</li>
+<li>消费者<strong>成功地处理完了业务逻辑</strong>（比如数据库操作成功了）。</li>
+<li>消费者向 RabbitMQ 发送 basic.ack 确认信号。</li>
+<li><strong>致命时刻：</strong> 这个 ACK 信号在网络传输过程中<strong>丢失了</strong>，或者 RabbitMQ Broker 刚好在收到 ACK 的那一瞬间重启了。</li>
+</ol>
+</li>
+<li><strong>后果：</strong> RabbitMQ <strong>没有收到 ACK</strong>，它会单方面地认为：“这个消费者是不是处理失败了或者挂了？” 出于高可靠性的设计，它会在一段时间后，将这条<strong>已经被成功处理过</strong>的消息，<strong>重新投递</strong>给消费组里的另一个（或者同一个）消费者。重复消费就此产生。</li>
+</ul>
+<p><mark><strong>2. 消费者“假死”与 Rebalance (The “Zombie” Consumer)</strong></mark></p>
+<ul>
+<li><strong>流程：</strong><ol>
+<li>消费者拉取到消息，正在处理一个耗时较长的业务。</li>
+<li><strong>致命时刻：</strong> 在处理过程中，消费者所在的机器发生了<strong>严重的 Full GC 卡顿</strong>，或者网络连接暂时中断，导致它无法在心跳周期内向 RabbitMQ 发送心跳。</li>
+</ol>
+</li>
+<li><strong>后果：</strong> RabbitMQ 会误以为这个消费者已经“死亡”。它会立刻将这条正在被“假死”消费者处理的消息，<strong>重新标记为可投递（Requeue）</strong>，并将其分发给另一个健康的消费者。</li>
+<li><strong>结果：</strong> 过了一会儿，“假死”的消费者从 GC 中苏醒过来，继续处理完手里的任务并发送了 ACK。而另一边，新的消费者也处理完了同样的消息。重复消费再次发生。</li>
+</ul>
+<p><mark><strong>3. 生产者端的重试机制 (Producer Retries)</strong></mark></p>
+<ul>
+<li><strong>流程：</strong><ol>
+<li>生产者向 RabbitMQ 发送消息。</li>
+<li>RabbitMQ 成功接收并持久化了消息。</li>
+<li><strong>致命时刻：</strong> RabbitMQ 向生产者返回确认（Publisher Confirms）的途中，网络超时了。</li>
+</ol>
+</li>
+<li><strong>后果：</strong> 生产者没有收到确认，它无法判断消息到底是没发出去，还是仅仅确认丢了。出于“宁可重发，不可丢失”的原则，生产者的<strong>重试机制</strong>会被触发，<strong>重新发送一模一样的消息</strong>。这就从源头上产生了重复。</li>
+</ul>
 
                 
               </div>
@@ -920,9 +1127,9 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" class="print-no-link">#消息队列</a>
-      
         <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" class="print-no-link">#消息队列</a>
       
     </div>
   
@@ -978,6 +1185,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2026/05/20/ai/Agent-RAG-MCP-Skills/" title="Agent、RAG、MCP 与 Skills 知识整理">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Agent、RAG、MCP 与 Skills 知识整理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">

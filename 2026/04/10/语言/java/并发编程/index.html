@@ -47,7 +47,7 @@
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260107162840535-1775809538968.png">
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260107162857506-1775809509397.png">
 <meta property="article:published_time" content="2026-04-10T03:39:12.000Z">
-<meta property="article:modified_time" content="2026-05-12T15:08:46.132Z">
+<meta property="article:modified_time" content="2026-10-01T12:47:15.395Z">
 <meta property="article:author" content="Yangyang Kong">
 <meta property="article:tag" content="Java">
 <meta name="twitter:card" content="summary_large_image">
@@ -406,7 +406,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          19k 字
+          26k 字
         
       </span>
     
@@ -417,7 +417,7 @@
         
         
         
-          159 分钟
+          219 分钟
         
       </span>
     
@@ -1149,7 +1149,277 @@
 </ul>
 <h1 id="数据结构有哪些是线程安全的"><a href="#数据结构有哪些是线程安全的" class="headerlink" title="数据结构有哪些是线程安全的"></a>数据结构有哪些是线程安全的</h1><p><img src="/../../../img/blog/image-20260107162840535-1775809538968.png" srcset="/img/loading.gif" lazyload alt="image-20260107162840535-1775809538968"></p>
 <p><img src="/../../../img/blog/image-20260107162857506-1775809509397.png" srcset="/img/loading.gif" lazyload alt="image-20260107162857506-1775809509397"></p>
-
+<h1 id="面试真题"><a href="#面试真题" class="headerlink" title="面试真题"></a>面试真题</h1><h2 id="为什么要用线程池？"><a href="#为什么要用线程池？" class="headerlink" title="为什么要用线程池？"></a>为什么要用线程池？</h2><ul>
+<li><strong>降低资源消耗</strong>：通过重复利用已创建的线程，<mark>降低线程创建和销毁造成的损耗。</mark></li>
+<li><strong>提高响应速度</strong>：当任务到达时，任务可以不需要等到线程创建就能立刻执行。</li>
+</ul>
+<h2 id="有一个基础组件，需要能够实时的感知线程池的运行情况，例如等待队列的大小，队列有没有满，并且能够对异常情况做预警，如何实现这个组件？"><a href="#有一个基础组件，需要能够实时的感知线程池的运行情况，例如等待队列的大小，队列有没有满，并且能够对异常情况做预警，如何实现这个组件？" class="headerlink" title="有一个基础组件，需要能够实时的感知线程池的运行情况，例如等待队列的大小，队列有没有满，并且能够对异常情况做预警，如何实现这个组件？"></a>有一个基础组件，需要能够实时的感知线程池的运行情况，例如等待队列的大小，队列有没有满，并且能够对异常情况做预警，如何实现这个组件？</h2><p><strong>一、 核心架构设计</strong></p>
+<p>我们不应该去修改 JDK 原生的代码，而是应该采用**装饰器模式（Decorator Pattern）*<em>或*<em>代理模式</em></em>，包装原生的 ThreadPoolExecutor。</p>
+<p><strong>1. 数据采集层（如何拿到数据？）</strong></p>
+<p>获取线程池状态主要有两种方式结合：<strong>定时拉取（Pull）</strong> + <strong>事件拦截（Push）</strong>。</p>
+<ul>
+<li><p><strong>定时拉取（获取常规指标，如队列大小）：</strong><br>组件内部维护一个单线程的 ScheduledExecutorService（监控专属线程），每隔 N 秒（如 3-5 秒）遍历所有被托管的线程池，调用原生的 API 获取快照数据：</p>
+<ul>
+<li>getActiveCount()：活跃线程数</li>
+<li>getQueue().size()：当前等待队列大小</li>
+<li>getQueue().remainingCapacity()：队列剩余容量（借此判断队列是否已满）</li>
+<li>getCorePoolSize() &#x2F; getMaximumPoolSize()：核心&#x2F;最大线程数</li>
+</ul>
+</li>
+<li><p><strong>事件拦截（获取实时异常，如队列满了&#x2F;拒绝策略触发）：</strong><br>这是<strong>最关键</strong>的一步。如何第一时间知道队列满了且线程池炸了？<strong>拦截拒绝策略（RejectedExecutionHandler）</strong>。<br>我们需要提供一个动态代理类，包装用户配置的拒绝策略：</p>
+<p>codeJava</p>
+<figure class="highlight haxe"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs haxe"><span class="hljs-keyword">public</span> <span class="hljs-title class_"><span class="hljs-keyword">class</span> <span class="hljs-title">MonitoredRejectHandler</span> <span class="hljs-keyword"><span class="hljs-keyword">implements</span> <span class="hljs-type">RejectedExecutionHandler</span></span> </span>&#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> RejectedExecutionHandler targetHandler; <span class="hljs-comment">// 原来的拒绝策略</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">String</span> threadPoolName;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> void rejectedExecution(Runnable r, ThreadPoolExecutor executor) &#123;<br>        <span class="hljs-comment">// 1. 触发实时告警事件（队列已满，且最大线程数已耗尽）</span><br>        AlertEngine.fireRejectEvent(threadPoolName, executor);<br>        <br>        <span class="hljs-comment">// 2. 累加拒绝次数指标 (Metrics)</span><br>        MetricsCollector.incrementRejectCount(threadPoolName);<br><br>        <span class="hljs-comment">// 3. 执行原有的拒绝逻辑（不破坏业务逻辑）</span><br>        targetHandler.rejectedExecution(r, executor);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>2. 核心计算层（如何判断需要预警？）</strong></p>
+<p>采集到数据后，组件需要基于**阈值（Thresholds）**进行实时计算。</p>
+<ul>
+<li><strong>水位线预警（Early Warning）：</strong><br>不需要等队列真满了才告警，我们可以设定阈值（支持 Nacos&#x2F;Apollo 动态配置）。<ul>
+<li><em>队列容量使用率：</em> queue.size() &#x2F; (queue.size() + queue.remainingCapacity()) &gt; 80%。</li>
+<li><em>活跃度：</em> activeCount &#x2F; maximumPoolSize &gt; 80%。</li>
+</ul>
+</li>
+<li>如果连续 N 次拉取（防网络抖动误报）都超过阈值，则生成一条“预警消息”。</li>
+</ul>
+<p><strong>3. 告警策略层（防雪崩与防骚扰设计）</strong></p>
+<p>这一层是体现高级工程师水平的地方。<strong>绝对不能一发生异常就无脑发通知</strong>，否则线上出问题时，秒级成千上万的报警会把钉钉&#x2F;飞书网关打垮，也会让开发人员麻木。</p>
+<p>必须引入<strong>限流与防抖机制（Alert Silencing &amp; Rate Limiting）</strong>：</p>
+<ul>
+<li><strong>滑动窗口限流：</strong> 同一个线程池的同一种告警，在 5 分钟内只允许发送 1 次。</li>
+<li><strong>告警收敛：</strong> 如果多个线程池同时报警（可能是底层数据库挂了导致所有 I&#x2F;O 线程阻塞），将告警合并成一条摘要发送。</li>
+<li>可以借助 Google Guava 的 RateLimiter 或基于 Redis 的带过期时间的 Key 来实现静默期限制。</li>
+</ul>
+<h2 id="我这个场景的线程池的各个参数设置怎么回答？"><a href="#我这个场景的线程池的各个参数设置怎么回答？" class="headerlink" title="我这个场景的线程池的各个参数设置怎么回答？"></a><mark>我这个场景的线程池的各个参数设置怎么回答？</mark></h2><p><strong>第一步：定调——明确任务的物理属性（破题关键）</strong></p>
+<p>“面试官您好。在配置这个线程池之前，我首先对‘优惠券全排列组合计算’这个任务进行了剖析。这是一个极其典型的<strong>纯 CPU 密集型任务（Compute-Bound）</strong>，因为排列组合主要消耗的是 CPU 的算力，几乎不涉及查数据库或发起网络请求等耗时的 I&#x2F;O 阻塞。</p>
+<p>明确了这个物理属性后，我配置线程池的<strong>核心指导思想就变成了：榨干每一滴 CPU 性能，但坚决避免因线程过多导致的 CPU 频繁上下文切换（Context Switch）。</strong>”</p>
+<p><strong>第二步：核心参数的推演与设定（参数解析）</strong></p>
+<p>“基于以上指导思想，假设我们的线上服务器是标准的 <strong>8 核 CPU</strong>，我的具体参数推演如下：”</p>
+<p><strong>1. 核心线程数 (corePoolSize) 与 最大线程数 (maximumPoolSize)</strong></p>
+<ul>
+<li><strong>设定值：</strong> 我将这两个参数<strong>设为相等</strong>，都设置为 <strong>N + 1</strong>（即 8 核机器设为 9 个线程）。</li>
+<li><strong>设计考量（为什么这么设？）：</strong><ul>
+<li>首先，对于纯 CPU 计算，<strong>最完美的并发度就是物理核心数</strong>。1 个核心同一时刻只能专注算 1 个排列组合。如果我开启 50 个线程，CPU 就会在 50 个线程之间疯狂切换，保存和恢复寄存器状态的开销反而会严重拖慢整体耗时，导致性能倒退。</li>
+<li><strong>为什么是 N+1 而不是 N？</strong> 经验表明，即使是纯计算，线程偶尔也会因为操作系统的缺页中断（Page Fault）发生极其短暂的暂停。多备 1 个线程，能在某个线程卡顿的瞬间顶上去，确保 CPU 利用率始终维持在 100%。</li>
+<li><mark><strong>为什么最大和核心设为一样？</strong> 因为在我的场景下，不需要临时工来应对突发 I&#x2F;O 拥堵。固定线程数能省去线程频繁扩缩容的开销，保持计算引擎的极度稳定。</mark></li>
+</ul>
+</li>
+</ul>
+<p><strong>2. 任务队列 (workQueue) 的选择与容量</strong></p>
+<ul>
+<li><strong>设定值：</strong> 我选择了有界阻塞队列 ArrayBlockingQueue，<mark>容量设定为一个相对较小的值（例如 <strong>50 到 100</strong>）</mark>。</li>
+<li><strong>设计考量（为什么不能大？）：</strong><ul>
+<li><mark>这里必须结合我的业务场景：这是给<strong>用户实时推荐优惠券</strong>的接口，用户的耐心极限是 1 秒钟。</mark></li>
+<li>如果我们把队列设得很大（比如 5000），当并发请求涌来时，大量计算任务会在队列里傻等。即使 3 秒后算出了最优优惠券，用户也早就关掉付款页面了。这种计算是毫无意义的，还会白白消耗 CPU 资源。</li>
+<li><mark>因此，我设定一个较小的队列，目的是<strong>起到一个微小的缓冲作用</strong>。</mark></li>
+</ul>
+</li>
+</ul>
+<p><mark><strong>3. 拒绝策略 (RejectedExecutionHandler)</strong></mark></p>
+<ul>
+<li><strong>设定值：</strong> 我并没有采用默认的直接抛异常（AbortPolicy），而是选择了 <mark><strong>CallerRunsPolicy（让调用者线程自己去执行）</strong></mark>，或者自定义了一个降级策略。</li>
+<li><strong>设计考量（神来之笔）：</strong><ul>
+<li>如果核心的 9 个计算线程都在全速运转，且队列（50）也塞满了。说明当前的计算压力已经达到了服务器的物理极限。</li>
+<li><mark>此时如果触发 CallerRunsPolicy，Tomcat 的 HTTP 接收线程（也就是主线程）就会被迫亲自下场去算排列组合。<strong>这其实形成了一种天然的背压（Back-pressure）机制！</strong> 它会让上游接收 HTTP 请求的速度变慢，保护了系统不被压垮。</mark></li>
+<li><strong>业务降级预案：</strong> <mark>当然，在实际业务代码中，如果捕获到线程池拒绝（或者主线程计算超时），我会立刻触发降级机制：不再计算极其复杂的全排列组合，而是<strong>直接返回几张高优先级的通用优惠券兜底</strong>，宁可少帮用户省两块钱，也必须保证整个付款链路不卡死。</mark></li>
+</ul>
+</li>
+</ul>
+<p><strong>4. 空闲时间 (keepAliveTime)</strong></p>
+<ul>
+<li><strong>设定值：</strong> 因为我将核心和最大线程数设为一样了，所以这个参数在这里其实<strong>没有意义（或者设为 0）</strong>。这 9 个核心计算线程会随着应用启动一直存活。</li>
+</ul>
+<p><strong>第三步：总结与升华（展示工程深度）</strong></p>
+<p>“总结来说，针对优惠券全排列这个场景，我的线程池配置策略是：<strong>用 N+1 的固定小线程数压榨 CPU 极限算力，用极小的有界队列舍弃无效等待，用 CallerRunsPolicy 配合业务降级实现系统兜底。</strong></p>
+<p>最终在压测和实际上线后，正如简历中所写，我们将原本串行在主线程里高达 2.5s 的耗时，利用这 9 个线程的并行归并计算，稳定压缩到了 897ms，完美达到了毫秒级的业务要求。”</p>
+<p><strong>最大线程数一般怎么设置？</strong></p>
+<p><mark><strong>场景一：普通的 CRUD &#x2F; I&#x2F;O 密集型业务（最常见，占 90%）</strong></mark></p>
+<ul>
+<li><strong>业务画像：</strong> 比如你的 Spring Boot 接口大部分时间在等 MySQL 返回数据，或者在调用第三方 HTTP 接口。</li>
+<li><strong>队列性质：</strong> 通常配一个较大的有界队列（如 LinkedBlockingQueue(1000)），用来做削峰填谷。</li>
+<li><strong>最大线程数怎么设？</strong><ul>
+<li><strong>经典设置：</strong> 通常设置为核心线程数的 <strong>1.5 倍到 2 倍</strong>。</li>
+<li><em>例如：如果核心算了是 80，最大设为 120 到 150 左右。</em></li>
+</ul>
+</li>
+<li><strong>设计考量：</strong> 对于这种业务，如果队列里已经堆积了 1000 个任务，说明 I&#x2F;O 层面可能出现了轻微拥堵（比如数据库有点慢了）。此时适当增加 50 个线程去并发读取，希望能加速消化队列。但这 50 个只是救急的，等流量洪峰过去，利用 keepAliveTime（空闲存活时间）把这 50 个临时工释放掉，避免长期占用大量内存。</li>
+</ul>
+<p><mark><strong>场景二：极度要求“低延迟”的高并发业务（如秒杀、抢购）</strong></mark></p>
+<ul>
+<li><strong>业务画像：</strong> 双 11 零点抢茅台。用户的耐心只有 1 秒钟，超过 1 秒没反应用户就刷新页面了。</li>
+<li><strong>队列性质：</strong> <strong>绝对不能排长队！</strong> 通常使用<strong>极小容量的队列</strong>（如 ArrayBlockingQueue(10)），甚至使用零容量的 <strong>SynchronousQueue</strong>（这是一种特殊的队列，里面不能存任何东西，只能做一手交钱一手交货的直接传递）。</li>
+<li><strong>最大线程数怎么设？</strong><ul>
+<li><strong>经典设置：</strong> 设置为你能忍受的<strong>服务器物理极限值</strong>（比如 200 到 500）。而且此时，<strong>通常把核心线程数和最大线程数设为一样大。</strong></li>
+<li><em>例如：core&#x3D;200, max&#x3D;200, queue&#x3D;SynchronousQueue。</em></li>
+</ul>
+</li>
+<li><strong>设计考量：</strong> 抢购场景下，“排队”就等于“超时失败”。所以我的策略是：一有请求进来，如果核心忙，<strong>我根本不让你排队（因为队列极小或为 0），而是立刻、马上触发“最大线程数”机制</strong>，疯狂拉起新线程去处理你！</li>
+<li>如果连 200 个最大线程都干满了，说明这台机器的算力到顶了。此时新进来的请求，会被直接触发<strong>拒绝策略（快速失败 Fail-Fast）</strong>，立刻返回给用户“系统繁忙请重试”。<strong>这比让用户在长队列里傻等 5 秒钟要好得多！</strong> 这种配置就是彻底放弃队列的缓冲能力，用最大数量的并发线程去硬扛低延迟</li>
+</ul>
+<p><strong>：纯 CPU 计算密集型业务（如全排列组合、视频转码）</strong></p>
+<ul>
+<li><strong>业务画像：</strong> 你的那个“优惠券全排列组合计算”的极客项目。</li>
+<li><strong>最大线程数怎么设？</strong><ul>
+<li><strong>经典设置：</strong> <strong>必须等于核心线程数，通常为 CPU物理核数 + 1</strong>。</li>
+<li><em>例如：8 核机器，core&#x3D;9, max&#x3D;9, queue&#x3D;ArrayBlockingQueue(100)。</em></li>
+</ul>
+</li>
+<li><strong>设计考量：</strong> 如果你把最大线程数设得很大（比如 50），当那 100 个任务塞满队列后，系统又拉起了 41 个“临时工”线程。<br><strong>灾难降临：</strong> 你的 8 个物理 CPU 核心，面对 50 个需要狂算排列组合的线程，CPU 根本算不过来，只能在这 50 个线程之间疯狂地做**“上下文切换（Context Switch）”**。光是切换保存状态就耗尽了性能，导致原本 1 秒能算完的优惠券，最后花了 10 秒才算完。<br>因此，对于纯 CPU 计算，<strong>临时工（多余的线程）不仅帮不上忙，反而会严重添乱！</strong> 最大线程数绝不能大于物理极限。</li>
+</ul>
+<h2 id="描述一个线程从创建开始的完整生命周期。你刚刚提到cpu调度，那cpu在切换线程的时候整个过程是怎样的，从jvm角度讲一下java创建线程的生命周期，start创建线程时，jvm怎么对它进行资源分配的，比如堆、栈"><a href="#描述一个线程从创建开始的完整生命周期。你刚刚提到cpu调度，那cpu在切换线程的时候整个过程是怎样的，从jvm角度讲一下java创建线程的生命周期，start创建线程时，jvm怎么对它进行资源分配的，比如堆、栈" class="headerlink" title="描述一个线程从创建开始的完整生命周期。你刚刚提到cpu调度，那cpu在切换线程的时候整个过程是怎样的，从jvm角度讲一下java创建线程的生命周期，start创建线程时，jvm怎么对它进行资源分配的，比如堆、栈"></a>描述一个线程从创建开始的完整生命周期。你刚刚提到cpu调度，那cpu在切换线程的时候整个过程是怎样的，从jvm角度讲一下java创建线程的生命周期，start创建线程时，jvm怎么对它进行资源分配的，比如堆、栈</h2><p><strong>第一问：描述一个线程从创建开始的完整生命周期？（宏观 Java 视角）</strong></p>
+<p>“面试官您好。在 Java 层面，一个线程的完整生命周期可以精炼地概括为六种核心状态，它们是在 java.lang.Thread.State 枚举中明确定义的：</p>
+<ol>
+<li><strong>NEW (新建)</strong>：当我们 new Thread() 创建了一个线程对象，但还没有调用 start() 方法时。此时它只是堆内存中的一个普通 Java 对象，操作系统中还没有对应的原生线程。</li>
+<li><strong>RUNNABLE (可运行)</strong>：当我们调用了 start() 方法后，线程进入此状态。在 Java 虚拟机中，RUNNABLE 涵盖了操作系统层面的两个状态：<strong>Ready（就绪，等待 CPU 调度）</strong> 和 <strong>Running（运行中，正在 CPU 上执行代码）</strong>。</li>
+<li><strong>BLOCKED (阻塞)</strong>：当线程试图获取一个内部排他锁（如进入 synchronized 代码块或方法），但该锁已经被其他线程持有时，它就会被投入该锁的**同步队列（Entry Set）**中阻塞，让出 CPU 执行权。直到锁被释放并被它抢到，才会重回 RUNNABLE。</li>
+<li><strong>WAITING (无限期等待)</strong>：当线程调用了 Object.wait()（无超时参数）、Thread.join() 或 LockSupport.park() 时。它会进入<strong>等待队列（Wait Set）</strong>，彻底休眠。它必须等待其他线程显式地唤醒它（如调用 notify() 或 unpark()）。</li>
+<li><strong>TIMED_WAITING (限期等待)</strong>：与 WAITING 类似，但它带有一个超时时间（比如 Thread.sleep(1000) 或 wait(1000)）。除了被唤醒，时间一到它也会自动重回 RUNNABLE 状态参与调度。</li>
+<li><strong>TERMINATED (终止)</strong>：线程的 run() 方法正常执行完毕，或者因为未捕获的异常而意外退出。此时线程的生命周期结束，操作系统会回收它的底层资源。”</li>
+</ol>
+<p><strong>第二问：你刚刚提到 CPU 调度，那 CPU 在切换线程的时候整个过程是怎样的？（下钻到操作系统底层）</strong></p>
+<p>“您提到了 CPU 调度，这就涉及到了非常昂贵的<strong>线程上下文切换（Thread Context Switch）</strong>。因为在现代主流 JVM（如 HotSpot）中，Java 线程是采用 1:1 模型直接映射到操作系统的内核线程（Kernel Thread）上的。</p>
+<p>当 CPU 决定把执行权从线程 A 剥夺，交给线程 B 时，底层的操作系统会执行以下极其精密的操作序列：”</p>
+<ol>
+<li><strong>触发中断进入内核态</strong>：通常是因为线程 A 的时间片用完了（时钟中断），或者它主动调用了阻塞方法（如 I&#x2F;O 操作或抢锁）。此时，硬件会触发中断，将 CPU 的执行权限从用户态切换到<strong>内核态（Ring 0）</strong>。</li>
+<li><strong>保存旧线程（线程 A）的上下文</strong>：<ul>
+<li>内核急忙将 CPU 当前的一系列<strong>核心硬件寄存器</strong>（如：PC 程序计数器记录跑到哪行代码了、SP 栈指针记录当前栈顶在哪里、以及各种通用寄存器和状态标志位）的快照，统统压入**线程 A 专属的内核栈（Kernel Stack）**中，或者保存到其 PCB（进程&#x2F;线程控制块）里。</li>
+</ul>
+</li>
+<li><strong>更新调度器状态</strong>：将线程 A 的状态从“运行”改为“就绪”或“阻塞”，并移出 CPU 的运行队列。</li>
+<li><strong>挑选新线程（线程 B）</strong>：操作系统的调度器（如 Linux 的 CFS 完全公平调度器）根据优先级和调度算法，从就绪队列中挑选出线程 B。</li>
+<li><strong>恢复新线程（线程 B）的上下文</strong>：<ul>
+<li>内核从线程 B 的内核栈或控制块中，将上次它被暂停时保存的寄存器值（特别是 PC 和 SP），<strong>原封不动地塞回 CPU 的物理寄存器中</strong>。</li>
+</ul>
+</li>
+<li><strong>返回用户态继续执行</strong>：最后，CPU 权限切回用户态。因为程序计数器（PC）已经指向了线程 B 上次暂停的那条汇编指令，CPU 就会接着线程 B 的代码继续往下跑，仿佛从未被打断过。</li>
+</ol>
+<p>“这就是为什么多线程并发如果控制不好，频繁的上下文切换（保存和恢复寄存器现场，以及内核态的来回横跳）会严重消耗 CPU 算力的根本原因。”</p>
+<p><strong>第三问 &amp; 第四问：从 JVM 角度讲一下 Java 创建线程的生命周期？start 创建线程时，JVM 怎么对它进行资源分配的，比如堆、栈？（下钻到 JVM 内存模型）</strong></p>
+<p>“这是一个非常深刻的视角。当我们从纯 Java 代码切入到 JVM 内存管理的底层时，new Thread() 和调用 start() 发生的资源分配是有着天壤之别的。”</p>
+<p><strong>1. new Thread() 阶段：仅仅是在【堆（Heap）】中分配内存</strong><br>“当我们写下 Thread t &#x3D; new Thread() 时，JVM 仅仅是在它的**堆内存（Java Heap）**中，像创建普通 Java 对象（比如 new String()）一样，为这个 Thread 类的实例分配了一块连续的内存空间。<br>这块堆内存里存储了该线程的名称、优先级、线程组（ThreadGroup）、未捕获异常处理器等属性。<br><strong>此时，操作系统层面完全不知道有这个线程的存在，它是不占任何执行资源的。</strong>”</p>
+<p><strong>2. 调用 t.start() 阶段：JVM 向操作系统申请资源，并在【栈（Stack）】和【元空间】等区域分配核心结构</strong><br>“真正的质变发生在调用 start() 方法时。这个方法底层是一个 native 方法（start0()），它会通过 JNI 调用底层的 C++ 代码（在 HotSpot 源码中是 os::create_thread）。此时，JVM 才会去向宿主操作系统申请创建一个真正的内核线程。</p>
+<p>在这个过程中，JVM 为新线程进行了极其关键的私有资源分配：”</p>
+<ul>
+<li><strong>分配虚拟机栈（Java Virtual Machine Stack）</strong>：<ul>
+<li>JVM 会在内存中（通常是物理内存中独立于 Java 堆的区域）为这个新线程分配一段连续的、<strong>绝对私有的内存空间</strong>，作为它的 Java 虚拟机栈。</li>
+<li>这块空间的大小可以通过 -Xss 参数控制（默认通常是 1MB）。未来这个线程每调用一个 Java 方法，就会往这个栈里压入一个<strong>栈帧（Stack Frame）</strong>，里面存放着局部变量表、操作数栈和方法出口等信息。</li>
+</ul>
+</li>
+<li><strong>分配本地方法栈（Native Method Stack）</strong>：<ul>
+<li>如果该线程调用了 JNI 的 Native C&#x2F;C++ 方法，会用到这块私有栈。（在 HotSpot 中，虚拟机栈和本地方法栈是合二为一的）。</li>
+</ul>
+</li>
+<li><strong>分配程序计数器（Program Counter Register）</strong>：<ul>
+<li>这是一块极小的私有内存，存放当前线程正在执行的 Java 字节码指令的地址（如果是 Native 方法则为空）。这是线程切换后能恢复执行的寻址依据。</li>
+</ul>
+</li>
+<li><mark><strong>TLAB（Thread Local Allocation Buffer，线程本地分配缓存）分配</strong>：</mark><ul>
+<li>为了优化将来这个线程在堆中 new 对象的性能，避免多线程并发抢占堆内存的分配锁，JVM 会在 Eden 区为这个新线程预先切出一小块<strong>私有的分配缓冲区（TLAB）</strong>。</li>
+</ul>
+</li>
+</ul>
+<h2 id="semaphore信号量底层是怎么实现？"><a href="#semaphore信号量底层是怎么实现？" class="headerlink" title="semaphore信号量底层是怎么实现？"></a>semaphore信号量底层是怎么实现？</h2><p>关于 Semaphore，它的<mark>底层和 CountDownLatch 非常相似</mark>，核心都是基于 <strong>AQS</strong> 构建的。它把 AQS 的 state 变量当作<strong>许可证数量</strong>，利用 <strong>CAS 操作</strong>和 <strong>自旋</strong> 来保证对 state 修改的原子性。当许可证不足时，线程会被放入 AQS 的双向队列中阻塞挂起（利用 LockSupport），并在其他线程释放许可证时被唤醒。</p>
+<h2 id="线程之间通信有哪些方式"><a href="#线程之间通信有哪些方式" class="headerlink" title="线程之间通信有哪些方式"></a>线程之间通信有哪些方式</h2><p>至于线程间的通信方式，如果从底层机制来看，Java 主要是基于<strong>共享内存模型</strong>，配合 volatile 和互斥锁（synchronized&#x2F;Lock）来保证数据一致性。在需要协调执行顺序时，最经典的是 Object 的 <strong>wait&#x2F;notify</strong> 或 Condition 的 <strong>await&#x2F;signal</strong>。而在日常的工程开发中，为了避免自己处理复杂的底层同步，我们更倾向于使用高级的并发组件，比如用于同步协调的 <strong>CountDownLatch&#x2F;Semaphore</strong>，以及用于解耦数据传输的各种 <strong>BlockingQueue（阻塞队列）</strong>。”</p>
+<h2 id="虚拟线程（Virtual-Threads）是有栈协程还是无栈协程？"><a href="#虚拟线程（Virtual-Threads）是有栈协程还是无栈协程？" class="headerlink" title="虚拟线程（Virtual Threads）是有栈协程还是无栈协程？"></a><mark>虚拟线程（Virtual Threads）是有栈协程还是无栈协程？</mark></h2><ul>
+<li><p><strong>无栈协程 (Stackless Coroutine)：</strong></p>
+<ul>
+<li><p><strong>代表语言：</strong> JavaScript 的 async&#x2F;await，Rust，C++，Python 的协程。</p>
+</li>
+<li><p><strong>特点：</strong> <mark>协程在挂起（suspend&#x2F;yield）时，<strong>不保存自己的调用栈（Call Stack）</strong>。它的状态会被编译器转化成一个极其轻量的状态机（State Machine）存储在堆内存中。</mark></p>
+</li>
+<li><p><strong>缺点：</strong> 具有很强的<mark><strong>传染性（Function Color 痛点）</strong></mark>。如果你在一个普通方法里调用了一个异步（协程）方法，这个普通方法也必须被标记为异步（变成协程），层层传染，导致旧代码很难无缝重构。</p>
+</li>
+<li><h4 id="解释无栈协程（传染性）的根源"><a href="#解释无栈协程（传染性）的根源" class="headerlink" title="解释无栈协程（传染性）的根源"></a>解释无栈协程（传染性）的根源</h4><p>“无栈协程（如 JS, Python）本质是<strong>编译器层面的状态机转换</strong>。</p>
+<ul>
+<li><strong>栈的处理：</strong> 当一个 async 函数遇到 await 挂起时，它会<strong>销毁</strong>自己的调用栈，并立刻向调用者执行一个 return。</li>
+<li><strong>返回值突变：</strong> 因为真正的结果还没出来，它只能返回一个 <strong>Promise 或 Future 凭证</strong>。</li>
+<li><strong>导致传染：</strong> 此时，调用者本来期望拿到一个‘结果值’，现在却拿到了一个‘凭证’。为了从凭证中解出结果，调用者也必须使用 await。而一旦用了 await，编译器就强迫该调用者也必须声明为 async。这种**由于返回值类型从‘值’突变为‘凭证’**而引发的链式修改，就是传染性的根源。”</li>
+</ul>
+<p><strong>解释有栈协程（虚拟线程）如何免于传染</strong></p>
+<p>“而 Java 虚拟线程作为<strong>有栈协程</strong>，是在 <strong>JVM 运行时</strong>层面实现的，对代码完全透明。</p>
+<ul>
+<li><strong>栈的处理：</strong> 当虚拟线程遇到阻塞 IO 时，JVM 会像按下暂停键一样，将整个**调用栈（Stack）**完整地从平台线程拷贝到堆内存中‘冻结’起来。</li>
+<li><strong>无需提前返回：</strong> 重点在于，它在挂起时<strong>不需要执行 return</strong>，也就<strong>不需要给调用者返回一个 Promise 凭证</strong>。</li>
+<li><strong>不产生传染：</strong> 在调用者看来，这依然是一个普通的、会阻塞的同步调用。当 IO 完成，JVM 自动把栈恢复，函数从断点处继续执行并返回真正的结果。因为<strong>返回值的类型始终是‘结果’而非‘凭证’</strong>，代码签名不需要任何改变，所以它完美免疫了传染性。”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>有栈协程 (Stackful Coroutine)：</strong></p>
+<ul>
+<li><strong>代表语言：</strong> Java 21 的虚拟线程，Go 语言的 Goroutine（早期），Erlang。</li>
+<li><strong>特点：</strong> <mark>每一个虚拟线程都有自己<strong>独立的、可动态伸缩的调用栈（Call Stack）</strong>。</mark></li>
+<li><strong>工作原理（Java 的实现）：</strong><ul>
+<li>当一个虚拟线程执行到阻塞操作（如 Thread.sleep()、网络 I&#x2F;O Socket.read()）时，JVM 会进行**卸载（Unmount）**操作。</li>
+<li>JVM 会把这个虚拟线程当前的调用栈帧（Stack Frames）从底层的平台线程（Platform Thread &#x2F; OS 线程）的内存中<mark><strong>拷贝（复制）到 Java 的堆内存（Heap）中</strong></mark>保存起来。</li>
+<li>底层的 OS 线程被释放，可以立刻去执行其他就绪的虚拟线程。</li>
+<li>当阻塞操作完成（如网络数据到了），JVM 进行**挂载（Mount）**操作，把保存在堆里的调用栈重新复制回某个空闲的 OS 线程上，从断点处继续执行。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>为什么 Java 选择有栈协程？（面试高分亮点）：</strong></p>
+<ul>
+<li><mark><strong>极佳的向后兼容性（最核心原因）：</strong> 这是 Java 最大的优势。因为有自己独立的栈，虚拟线程在代码层面的表现和传统的 java.lang.Thread <strong>完全一模一样</strong>。</mark></li>
+</ul>
+</li>
+</ul>
+<h2 id="查询场景下会有并发安全问题吗？分布式锁能彻底解决并发安全问题吗？分布式锁的超时时间如何设置？"><a href="#查询场景下会有并发安全问题吗？分布式锁能彻底解决并发安全问题吗？分布式锁的超时时间如何设置？" class="headerlink" title="查询场景下会有并发安全问题吗？分布式锁能彻底解决并发安全问题吗？分布式锁的超时时间如何设置？"></a>查询场景下会有并发安全问题吗？分布式锁能彻底解决并发安全问题吗？分布式锁的超时时间如何设置？</h2><p><strong>查询场景下的并发安全问题：</strong><mark>1.缓存层面的并发问题（缓存击穿 &#x2F; 缓存雪崩）， 2. 事务隔离级别带来的“幻读 &#x2F; 不可重复读”</mark></p>
+<p> <strong>分布式锁能彻底解决并发安全问题吗？</strong></p>
+<p><strong>答案是：不能彻底解决。分布式锁不是银弹，它只能解决 99% 的问题，但在极端分布式环境下依然会失效。</strong></p>
+<p><strong>1.基础设施故障（如 Redis 主从切换丢失锁）</strong></p>
+<p><strong>2.“锁释放”与“事务提交”的顺序问题（业务代码常见 Bug）</strong></p>
+<ul>
+<li>如果在 Spring 的 @Transactional 事务内部加分布式锁，方法执行完会<strong>先释放锁，再提交事务</strong>。</li>
+<li>在释放锁和提交事务的几十毫秒空隙里，下一个线程获取到锁，去查数据库，此时上一个事务还没提交，读到的还是旧数据。</li>
+</ul>
+<p><strong>如何做到“彻底安全”？（兜底方案）</strong></p>
+<p>分布式锁只能提供“效率上的优化”（避免重复工作），不能提供“绝对的安全性”。要做到彻底安全，必须结合<strong>数据库层面的机制（Defense in Depth 深度防御）</strong>：</p>
+<ol>
+<li><strong>乐观锁（版本号 &#x2F; 状态机）</strong>：UPDATE table SET stock &#x3D; stock - 1, version &#x3D; version + 1 WHERE id &#x3D; 1 AND version &#x3D; #{oldVersion}。</li>
+<li><strong>数据库唯一索引（Unique Key）</strong>：防止并发重复插入数据。</li>
+</ol>
+<p><strong>分布式锁的超时时间如何设置？（看门狗）</strong></p>
+<p>分布式锁的超时时间（TTL）设置是一个两难的问题：</p>
+<ul>
+<li><mark><strong>设置太短</strong>：</mark>业务还没执行完，锁就过期释放了（导致并发冲突）。</li>
+<li><mark><strong>设置太长</strong>：</mark>如果持有锁的应用节点宕机，由于锁没过期，其他节点只能干等，导致业务长时间处于死锁或阻塞状态。</li>
+</ul>
+<h2 id="线程池里的线程抛异常了，线程会挂掉吗"><a href="#线程池里的线程抛异常了，线程会挂掉吗" class="headerlink" title="线程池里的线程抛异常了，线程会挂掉吗"></a>线程池里的线程抛异常了，线程会挂掉吗</h2><p><strong>1. 使用 execute() 提交任务</strong></p>
+<p>如果你使用 public void execute(Runnable command) 提交任务，且任务内部没有捕获异常：</p>
+<ul>
+<li><strong>线程会挂掉吗？</strong> <strong>会。</strong> 该线程会因为未捕获的异常而终止并退出。</li>
+<li><strong>异常会显示吗？</strong> <strong>会。</strong> 异常堆栈信息会直接打印到控制台或日志（System.err）。</li>
+<li><strong>线程池会受影响吗？</strong> 虽然当前线程挂了，但线程池会监控到这个情况，它会<strong>自动创建一个新的线程</strong>补偿回来，以维持线程池的 corePoolSize（核心线程数）。</li>
+<li><strong>源码逻辑：</strong> ThreadPoolExecutor 中的工作线程 Worker 在执行任务时，如果任务抛出异常且没有被 catch，异常会向上抛给 runWorker 方法，最终导致该线程结束。</li>
+</ul>
+<p><strong>2. 使用 submit() 提交任务</strong></p>
+<p>如果你使用 public Future&lt;?&gt; submit(Runnable task) 提交任务：</p>
+<ul>
+<li><strong>线程会挂掉吗？</strong> <strong>不会。</strong> 线程会完好无损地回到线程池中，继续执行接下来的任务。</li>
+<li><strong>异常会显示吗？</strong> <strong>不会。</strong> 如果你不去主动处理，这个异常会被“吞掉”，控制台不会有任何输出。</li>
+<li><strong>如何获取异常？</strong> 异常被封装在了返回的 Future 对象中。只有当你调用 future.get() 时，它才会抛出 ExecutionException。</li>
+<li><strong>源码逻辑：</strong> submit 内部会将你的任务包装成一个 FutureTask。FutureTask 的 run 方法里有一个巨大的 try-catch 块，它捕获了所有的异常并保存在一个成员变量里，因此异常不会传递到线程的执行层级，线程也就不会死亡。</li>
+</ul>
+<h2 id="多线程之间是否会相互影响，单一线程异常是否会导致其他所有线程挂掉"><a href="#多线程之间是否会相互影响，单一线程异常是否会导致其他所有线程挂掉" class="headerlink" title="多线程之间是否会相互影响，单一线程异常是否会导致其他所有线程挂掉"></a>多线程之间是否会相互影响，单一线程异常是否会导致其他所有线程挂掉</h2><ul>
+<li><p><strong>核心观点：直接层面不会，间接层面可能会。</strong></p>
+<ul>
+<li><strong>直接层面（操作系统进程隔离）</strong>：操作系统为每个进程分配了<mark>独立的<strong>虚拟地址空间</strong></mark>。进程 A 发生段错误（Segmentation fault）或者 OOM（内存溢出）崩溃了，绝对不会直接导致进程 B 的内存被破坏或崩溃。</li>
+<li><strong>间接层面（资源竞争与通信）</strong>：<ol>
+<li><strong>资源耗尽</strong>：如果<mark>进程 A 是因为疯狂占用 CPU、耗尽物理内存或者耗尽了文件描述符（FD）而死，那么在这个过程中，进程 B 可能会因为抢不到资源而被系统“饿死”或 OOM（比如被 Linux 的 OOM Killer 杀掉）。</mark></li>
+</ol>
+</li>
+</ul>
+<h4 id="问题-3-4：多线程之间是否会相互影响？单一线程异常会导致所有线程挂掉吗？"><a href="#问题-3-4：多线程之间是否会相互影响？单一线程异常会导致所有线程挂掉吗？" class="headerlink" title="问题 3 &amp; 4：多线程之间是否会相互影响？单一线程异常会导致所有线程挂掉吗？"></a>问题 3 &amp; 4：多线程之间是否会相互影响？单一线程异常会导致所有线程挂掉吗？</h4><p><strong>核心观点：单一线程抛出异常本身不会牵连其他线程，但线程间极易通过“共享资源”相互影响。</strong></p>
+<ol>
+<li><strong>单一线程异常会不会挂掉整个进程？</strong><ul>
+<li><strong>不会。</strong> 如果线程 A 抛出了一个未捕获的 <mark>NullPointerException 等 RuntimeException</mark>，<strong>只有线程 A 会意外终止</strong>，线程 B、C 会继续正常运行。</li>
+<li><strong>唯一的例外（致命错误）</strong>：<mark>如果线程 A 触发的是 Error，比如疯狂 new 对象导致了 <strong>OutOfMemoryError（堆溢出）</strong></mark>。由于堆内存是所有线程共享的，此时整个 JVM 进程都会崩溃，所有线程跟着一起死。</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="什么是线程安全"><a href="#什么是线程安全" class="headerlink" title="什么是线程安全"></a>什么是线程安全</h2><p>多个线程同时访问同一份共享数据时，无论线程如何调度，程序结果都符合预期，就叫线程安全。</p>
+<h2 id="为什么加锁能保证可见性（解锁刷回主内存，加锁清空工作内存）"><a href="#为什么加锁能保证可见性（解锁刷回主内存，加锁清空工作内存）" class="headerlink" title="为什么加锁能保证可见性（解锁刷回主内存，加锁清空工作内存）"></a>为什么加锁能保证可见性（解锁刷回主内存，加锁清空工作内存）</h2>
                 
               </div>
             

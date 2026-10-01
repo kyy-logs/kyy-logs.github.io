@@ -40,7 +40,7 @@
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260307105614220.png">
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20250916225616548.png">
 <meta property="article:published_time" content="2026-04-09T14:28:06.000Z">
-<meta property="article:modified_time" content="2026-04-12T07:32:00.778Z">
+<meta property="article:modified_time" content="2026-10-01T12:47:15.402Z">
 <meta property="article:author" content="Yangyang Kong">
 <meta property="article:tag" content="Java">
 <meta property="article:tag" content="基础">
@@ -400,7 +400,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          17k 字
+          19k 字
         
       </span>
     
@@ -411,7 +411,7 @@
         
         
         
-          145 分钟
+          159 分钟
         
       </span>
     
@@ -1138,6 +1138,73 @@
 <li>这就把它和另外一个长得很像的工具 <mark><strong>CyclicBarrier（循环栅栏</mark>）</strong> 彻底区分开了。CyclicBarrier 的底层不是直接依赖 AQS 的共享锁，而是基于 ReentrantLock 和 Condition 实现的。它在计数归零并打破栅栏后，可以自动重置计数器（reset()），从而支持循环使用。</li>
 <li>所以我认为，在架构选型时，CountDownLatch 更适合**‘一次性的大规模事件协调或初始化等待’<strong>（比如<mark>主线程等待多个后台组件全部加载完毕再启动服务</mark>）；而 CyclicBarrier 更适合</strong>‘分批次、多阶段的迭代计算’**（比如一组线程做完第一阶段的汇总后，在栅栏处等齐了，再一起开始做第二阶段）。”</li>
 </ul>
+<h1 id="面试真题"><a href="#面试真题" class="headerlink" title="面试真题"></a>面试真题</h1><h2 id="深拷贝的循环引用"><a href="#深拷贝的循环引用" class="headerlink" title="深拷贝的循环引用"></a>深拷贝的循环引用</h2><p>“深拷贝在处理带有循环引用的对象图时，如果采用朴素的递归算法，会因为在对象环中无限递归调用而导致 <strong>StackOverflowError（栈溢出）</strong>。</p>
+<p>解决这个问题的核心机制是<strong>备忘录（Memoization）</strong>。标准的深拷贝实现会维护一个哈希表（Map），用于记录**‘原始对象’到‘已拷贝对象’**的映射。</p>
+<p>算法在拷贝任何一个对象前，会<strong>首先检查这个对象是否已经存在于备忘录中</strong>。如果存在，就直接返回之前创建的拷贝，从而<strong>打断递归环</strong>。如果不存在，它会先创建一个新对象的空壳，<strong>并立即将这个‘原始-拷贝’的映射关系存入备忘录</strong>，然后再递归地去填充新对象的属性。</p>
+<p>这种‘<strong>先登记，再填充</strong>’的策略，确保了即使在复杂的循环引用结构中，每个对象也只会被完整地创建一次，从而优雅地解决了无限递归的问题。”</p>
+<h2 id="resources注解，autowired注解区别"><a href="#resources注解，autowired注解区别" class="headerlink" title="resources注解，autowired注解区别"></a>resources注解，autowired注解区别</h2><p><strong>一、@Autowired</strong></p>
+<ul>
+<li><strong>来源</strong>：Spring 提供（<code>org.springframework.beans.factory.annotation.Autowired</code>）</li>
+<li><strong>注入方式</strong>：按 <strong>类型（byType）</strong> 自动注入</li>
+<li><strong>是否必需</strong>：默认必需（<code>required=true</code>），可以设置 <code>required=false</code> 让 Spring 不报错</li>
+<li><strong>支持按名称</strong>：通过 <code>@Qualifier(&quot;beanName&quot;)</code> 指定名称</li>
+<li><strong>解析时机</strong>：<strong>Spring 容器启动时解析</strong></li>
+<li><strong>使用场景</strong>：Spring 容器管理的 Bean，支持<mark>构造器</mark>、字段、setter 注入</li>
+</ul>
+<p><strong>二、@Resource</strong></p>
+<ul>
+<li><strong>来源</strong>：Java 原生（<code>javax.annotation.Resource</code>）</li>
+<li><strong>注入方式</strong>：默认按 <strong>名称（byName）</strong> 注入</li>
+<li><strong>是否必需</strong>：<mark>默认必需，如果找不到 Bean 会报错</mark></li>
+<li><strong>支持按类型</strong>：<mark>如果按名称找不到，再按类型查找</mark></li>
+<li><strong>解析时机</strong>：<strong>容器初始化时解析</strong>（与 Spring 生命周期一致）</li>
+<li><strong>使用场景</strong>：兼容 JSR-250 标准，多用于 Java EE 或 Spring 集成</li>
+</ul>
+<h2 id="你有了解过MyBatis的切面操作吗？MyBatis的切面能做哪些事情？"><a href="#你有了解过MyBatis的切面操作吗？MyBatis的切面能做哪些事情？" class="headerlink" title="你有了解过MyBatis的切面操作吗？MyBatis的切面能做哪些事情？"></a>你有了解过MyBatis的切面操作吗？MyBatis的切面能做哪些事情？</h2><p>在 MyBatis 中，所谓的“切面”通常指其原生提供的 <strong>拦截器 (Interceptor)</strong> 机制。它利用了 <strong>JDK 动态代理</strong>，允许你在 SQL 执行的生命周期中进行“横插一刀”。</p>
+<p><strong>1. MyBatis 拦截器的底层原理</strong></p>
+<p>MyBatis 允许你拦截以下四个核心对象的方法：</p>
+<ol>
+<li><strong>Executor</strong>：拦截增删改查、缓存、事务等核心逻辑。</li>
+<li><mark><strong>StatementHandler</strong>：拦截 SQL 语句的预处理、参数设置（最常用，用于修改 SQL）。</mark></li>
+<li><mark><strong>ParameterHandler</strong>：拦截参数组装过程。</mark></li>
+<li><mark><strong>ResultSetHandler</strong>：拦截结果集的封装过程。</mark></li>
+</ol>
+<p><strong>底层实现：</strong> 当你开启插件时，MyBatis 会为这些对象生成一个<strong>代理对象</strong>。每当执行目标方法时，都会先经过你定义的 intercept 方法。</p>
+<p><strong>2. MyBatis 拦截器能做哪些事情？</strong></p>
+<p>这是面试中最高频的实战问题，主要场景包括：</p>
+<ol>
+<li><mark><strong>自动分页 (Pagination)</strong>：</mark><ul>
+<li><strong>典型代表</strong>：PageHelper。</li>
+<li><strong>做法</strong>：拦截 StatementHandler，在原始 SQL 后面动态拼接 LIMIT 和 OFFSET（或 Oracle 的 ROWNUM）。</li>
+</ul>
+</li>
+<li><mark><strong>通用字段自动填充 (Audit Logs)</strong>：</mark><ul>
+<li><strong>场景</strong>：每张表都有 create_time、update_time、operator_id。</li>
+<li><strong>做法</strong>：拦截 Executor.update()，在 SQL 执行前自动给这些参数赋值，程序员就不需要手动 set 了。</li>
+</ul>
+</li>
+<li><mark><strong>性能监控与慢 SQL 打印</strong>：</mark><ul>
+<li><strong>做法</strong>：在拦截器开始时记录时间，执行结束后计算耗时。如果超过 1s，就打印出完整的 SQL 语句和参数，方便调优。</li>
+</ul>
+</li>
+<li><strong>数据脱敏与加密</strong>：<ul>
+<li><strong>场景</strong>：手机号、身份证号存入数据库时加密，查出来时脱敏显示。</li>
+<li><strong>做法</strong>：拦截 ResultSetHandler 对结果进行脱敏处理；拦截 ParameterHandler 对存入参数进行加密。</li>
+</ul>
+</li>
+</ol>
+<h2 id="异常的作用"><a href="#异常的作用" class="headerlink" title="异常的作用"></a>异常的作用</h2><p>Java 引入异常机制，是为了<mark>把正常业务逻辑和错误处理逻辑解</mark>耦。相比返回错误码，异常可以携带更丰富的错误信息，并沿调用链自动传播，让真正有能力处理错误的地方统一处理，提高代码健壮性和可维护性。</p>
+<h2 id="Finally一定会被执行吗-catch里抛异常了，finally里代码可以正常执行吗？为什么呢？catch抛异常，但finally有返回值，拿到的是异常还是返回值？先执行finally的return代码还是先抛出异常？"><a href="#Finally一定会被执行吗-catch里抛异常了，finally里代码可以正常执行吗？为什么呢？catch抛异常，但finally有返回值，拿到的是异常还是返回值？先执行finally的return代码还是先抛出异常？" class="headerlink" title="Finally一定会被执行吗,,catch里抛异常了，finally里代码可以正常执行吗？为什么呢？catch抛异常，但finally有返回值，拿到的是异常还是返回值？先执行finally的return代码还是先抛出异常？"></a>Finally一定会被执行吗,,catch里抛异常了，finally里代码可以正常执行吗？为什么呢？catch抛异常，但finally有返回值，拿到的是异常还是返回值？先执行finally的return代码还是先抛出异常？</h2><blockquote>
+<p>finally 通常都会执行，包括 try 中有异常或 return 的情况，因为 JVM 会在方法真正返回前执行 finally。</p>
+</blockquote>
+<blockquote>
+<p>但如果发生 System.exit()、进程被 kill -9、机器宕机，或者程序永远无法走出 try 块时，finally 就不会执行。</p>
+</blockquote>
+<blockquote>
+<p>此外如果 finally 中写了 return，会覆盖 try 中的返回值，因此生产中不建议在 finally 中 return。</p>
+<p>catch 中即使抛出异常，finally 仍然会执行，因为 finally 在方法真正返回或异常真正抛出之前执行。如果 finally 中有 return，那么 return 会覆盖前面的异常或返回值，导致异常被吞掉，因此实际开发中不建议在 finally 中写 return。</p>
+</blockquote>
+<h2 id="如果不用spring，如何自己实现一个自定义注解，详细讲讲"><a href="#如果不用spring，如何自己实现一个自定义注解，详细讲讲" class="headerlink" title="如果不用spring，如何自己实现一个自定义注解，详细讲讲"></a><mark>如果不用spring，如何自己实现一个自定义注解，详细讲讲</mark></h2><p>“在 Java 中，自定义注解本质上只是一种<strong>元数据（Metadata）标签</strong>，如果不借助外力去解析它，它在代码中是不起任何作用的。如果我们脱离 Spring 框架自己实现一个自定义注解（例如用于统计方法耗时的 @LogExecutionTime），其核心原理可以概括为：<strong>‘定义注解标签 + 利用反射机制扫描 + 借助动态代理织入逻辑’</strong>。具体实现分为三步：首先，使用 @interface 关键字定义注解，并务必将其 @Retention 策略设置为 RUNTIME，确保注解信息能保留到运行期以便反射读取；同时通过 @Target(ElementType.METHOD) 限制其只能作用于方法。其次，在业务实现类的目标方法上贴上这个注解。最后也是最关键的一步，我们需要编写一个代理工厂类，利用 JDK 动态代理（Proxy.newProxyInstance）为目标对象生成一个代理对象。在这个代理对象的 InvocationHandler.invoke() 方法中，我们通过反射 API targetMethod.isAnnotationPresent(LogExecutionTime.class) 检查当前即将执行的真实方法上是否贴有该注解。如果存在，我们就可以在此处植入前置和后置逻辑（如记录开始和结束时间计算耗时），最后再通过 targetMethod.invoke() 放行真实方法的执行。实际上，我们手写的这套基于反射和动态代理的拦截机制，正是 Spring AOP 处理注解的底层核心原型的缩影。”</p>
 
                 
               </div>

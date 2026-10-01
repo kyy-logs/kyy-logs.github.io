@@ -27,7 +27,7 @@
 <meta property="og:description" content="手写单例模式public class Singleton {  	&#x2F;&#x2F;注意private，static     private static volatile Singleton instance; 	&#x2F;&#x2F;注意private     private Singleton() {}      public static Singleton getInstance() {         if (ins">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-04-11T05:10:00.000Z">
-<meta property="article:modified_time" content="2026-04-18T06:10:44.040Z">
+<meta property="article:modified_time" content="2026-10-01T12:47:15.400Z">
 <meta property="article:author" content="Yangyang Kong">
 <meta property="article:tag" content="Java">
 <meta name="twitter:card" content="summary_large_image">
@@ -385,7 +385,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          693 字
+          1.7k 字
         
       </span>
     
@@ -396,7 +396,7 @@
         
         
         
-          6 分钟
+          15 分钟
         
       </span>
     
@@ -628,6 +628,74 @@ public class MyHashMap&lt;K, V&gt; {
 }
 </code></pre>
 <p>}</p>
+<h1 id="面试真题"><a href="#面试真题" class="headerlink" title="面试真题"></a>面试真题</h1><h2 id="栈模拟队列，如何实现，栈最少需要几个元素，2个栈都是5个元素的话，是否可以，有哪些场景会出问题"><a href="#栈模拟队列，如何实现，栈最少需要几个元素，2个栈都是5个元素的话，是否可以，有哪些场景会出问题" class="headerlink" title="栈模拟队列，如何实现，栈最少需要几个元素，2个栈都是5个元素的话，是否可以，有哪些场景会出问题"></a>栈模拟队列，如何实现，栈最少需要几个元素，2个栈都是5个元素的话，是否可以，有哪些场景会出问题</h2><p><strong>1. 如何实现：双栈法</strong></p>
+<p>栈是“后进先出”，队列是“先进先出”。要实现顺序的翻转，必须使用<strong>两个栈</strong>：</p>
+<ul>
+<li><strong>输入栈 (Stack In)</strong>：负责接收新插入的数据（push 操作）。</li>
+<li><strong>输出栈 (Stack Out)</strong>：负责弹出数据（pop 操作）。</li>
+</ul>
+<p><strong>核心逻辑：</strong></p>
+<ol>
+<li><strong>入队</strong>：直接压入 Stack In。</li>
+<li><strong>出队</strong>：<ul>
+<li>如果 Stack Out 不为空，直接从 Stack Out 弹出栈顶元素。</li>
+<li>如果 Stack Out 为空，则将 Stack In 里的<strong>所有</strong>元素逐一弹出并压入 Stack Out，然后再从 Stack Out 弹出。</li>
+<li><em>原理</em>：数据从 In 到 Out 的搬运过程，正好实现了 LIFO 到 FIFO 的翻转。</li>
+</ul>
+</li>
+</ol>
+<p><strong>2. 栈最少需要几个元素？</strong></p>
+<p>这是一个理论边界问题：</p>
+<ul>
+<li><strong>最少需要 2 个栈</strong>：单栈无法改变数据的先后顺序（除非利用递归产生的系统栈，但那本质上还是利用了栈）。</li>
+<li><strong>每个栈的容量</strong>：<ul>
+<li>如果只谈“能否实现模拟”，栈的容量最少可以是 <strong>1</strong>。</li>
+<li>如果栈容量为 1，那么这个队列的总容量就是 2（In 存一个，Out 存一个）。</li>
+</ul>
+</li>
+</ul>
+<p><strong>3. 如果 2 个栈都是 5 个元素，可以实现吗？容量是多少？</strong></p>
+<p><strong>可以实现。</strong><br>这种情况下，模拟出来的队列<strong>逻辑最大容量是 10</strong>。</p>
+<p><strong>模拟过程演练：</strong></p>
+<ol>
+<li>连续向队列 push 5 个元素，此时 Stack In 满了（5&#x2F;5），Stack Out 是空的（0&#x2F;5）。</li>
+<li>此时执行一次 pop：Stack In 的 5 个元素全部搬到 Stack Out。此时 Stack In 空了（0&#x2F;5），Stack Out 满了（5&#x2F;5）。</li>
+<li><strong>关键点</strong>：此时 Stack In 又是空的了，你可以<strong>继续 push 5 个新元素</strong>。</li>
+<li>最终状态：Stack In 有 5 个，Stack Out 有 5 个。队列里一共存了 10 个元素。</li>
+</ol>
+<p><strong>结论</strong>：逻辑容量 &#x3D; Stack In 容量 + Stack Out 容量。</p>
+<p><strong>4. 哪些场景会出问题？（面试核心加分项）</strong></p>
+<p>虽然逻辑容量是 10，但在实际操作中，如果不满足特定条件，会发生**“阻塞”<strong>或</strong>“溢出”**：</p>
+<p><strong>场景 A：入队阻塞（In 满但 Out 不为空）</strong></p>
+<ul>
+<li><strong>现象</strong>：假设 Stack In 已经装了 5 个元素，此时你想 push 第 6 个。</li>
+<li><strong>问题</strong>：由于 Stack Out 此时<strong>不为空</strong>（比如里面还有 1 个旧元素没被 pop 走），根据 FIFO 原则，你<strong>不能</strong>把 In 里的数据搬到 Out（否则会导致顺序错乱）。</li>
+<li><strong>后果</strong>：此时虽然队列总数没到 10，但由于 In 栈物理空间满了，且无法“泄洪”到 Out 栈，导致第 6 个元素无法入队。</li>
+<li><strong>工程意义</strong>：这说明模拟队列的入队能力受限于 Stack In 的瞬时可用空间。</li>
+</ul>
+<p><strong>场景 B：搬运时的原子性问题</strong></p>
+<ul>
+<li><strong>问题</strong>：当 Out 为空触发搬运时，必须一次性把 In 里的<strong>所有</strong>元素全部倒过去。</li>
+<li><strong>错误操作</strong>：如果搬了一半停止了，或者中途又有新元素进入 In 且在搬运未完成时就参与了 Out 的弹出，会导致队列内部的数据顺序彻底混乱。</li>
+</ul>
+<p><strong>场景 C：空队列异常</strong></p>
+<ul>
+<li><strong>现象</strong>：当 Stack In 和 Stack Out 同时为空时。</li>
+<li><strong>问题</strong>：此时执行 pop 操作。</li>
+<li><strong>后果</strong>：程序必须有抛出 NoSuchElementException 或返回 null 的处理逻辑，否则会触发底层栈的 EmptyStackException。</li>
+</ul>
+<h2 id="查看日志文件最后几行的linux命令是什么-从一个test-txt文件中，取出第10行中的所有数字"><a href="#查看日志文件最后几行的linux命令是什么-从一个test-txt文件中，取出第10行中的所有数字" class="headerlink" title="查看日志文件最后几行的linux命令是什么,从一个test.txt文件中，取出第10行中的所有数字"></a><mark>查看日志文件最后几行的linux命令是什么,从一个test.txt文件中，取出第10行中的所有数字</mark></h2><p><mark>tail app.log</mark></p>
+<p><strong>5. 搜索关键字</strong></p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs stata">搜索内容<br>grep <span class="hljs-string">&quot;error&quot;</span> <span class="hljs-keyword">app</span>.<span class="hljs-keyword">log</span><br>grep -i <span class="hljs-string">&quot;redis&quot;</span> <span class="hljs-keyword">app</span>.<span class="hljs-keyword">log</span><br>grep -<span class="hljs-keyword">n</span> <span class="hljs-string">&quot;timeout&quot;</span> <span class="hljs-keyword">app</span>.<span class="hljs-keyword">log</span><br><br>-i 忽略大小写<br><br>-<span class="hljs-keyword">n</span> 显示行号<br></code></pre></td></tr></table></figure>
+
+<p><strong>7. 查看上下文（前后 5 行）</strong></p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs stata">grep -i -C 5 <span class="hljs-string">&quot;keyword&quot;</span> <span class="hljs-keyword">app</span>.<span class="hljs-keyword">log</span><br></code></pre></td></tr></table></figure>
+
+<p>线上排障通常先用 <code>tail -f</code> 实时看日志，再结合 <code>grep</code> 定位关键字，用 <code>sed</code> 按时间截取，用 <code>awk</code> 做统计分析，大文件优先用 <code>less</code> 避免直接打开卡死。</p>
+<p><strong>8.awk与sed</strong></p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs gams">awk <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span> <span class="hljs-keyword">file</span>.txt<br>把每一行的第<span class="hljs-number">1</span>列打印出来<br><span class="hljs-meta"><span class="hljs-keyword">$1</span> = 第1列</span><br><span class="hljs-meta"><span class="hljs-keyword">$2</span> = 第2列</span><br><span class="hljs-meta"><span class="hljs-keyword">$3</span> = 第3列</span><br>...<br><span class="hljs-meta"><span class="hljs-keyword">$0</span> = 整行</span><br><br>sed -n <span class="hljs-string">&#x27;10p&#x27;</span> <span class="hljs-keyword">file</span>.txt<br>只打印第<span class="hljs-number">10</span>行<br></code></pre></td></tr></table></figure>
+
+
 
                 
               </div>

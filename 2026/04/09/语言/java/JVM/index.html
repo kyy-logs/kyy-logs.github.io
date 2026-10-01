@@ -42,7 +42,7 @@
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260107110915889-1775807911016.png">
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260109231003665-1775807911016.png">
 <meta property="article:published_time" content="2026-04-09T14:28:06.000Z">
-<meta property="article:modified_time" content="2026-05-12T15:14:55.775Z">
+<meta property="article:modified_time" content="2026-10-01T03:34:10.787Z">
 <meta property="article:author" content="Yangyang Kong">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="Java">
@@ -402,7 +402,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          8.1k 字
+          11k 字
         
       </span>
     
@@ -413,7 +413,7 @@
         
         
         
-          68 分钟
+          96 分钟
         
       </span>
     
@@ -990,6 +990,137 @@
 <li>针对 Web 应用，我会优先选择 <strong>G1 收集器</strong> (-XX:+UseG1GC)，并设置一个合理的停顿时间目标（比如 200ms）。</li>
 <li><strong>最重要的是诊断参数</strong>：我一定会配置 <strong>-XX:+HeapDumpOnOutOfMemoryError</strong>。这样一旦线上发生内存泄漏导致 OOM，我能第一时间拿到 Dump 文件，通过 MAT 或 VisualVM 进行离线分析，定位是哪个类占用了过多内存。”</li>
 </ol>
+<h1 id="面试真题"><a href="#面试真题" class="headerlink" title="面试真题"></a>面试真题</h1><h2 id="内存逃逸是什么，简单介绍一下。"><a href="#内存逃逸是什么，简单介绍一下。" class="headerlink" title="内存逃逸是什么，简单介绍一下。"></a>内存逃逸是什么，简单介绍一下。</h2><p><strong>1. 核心定义（是什么）：</strong><br><mark>局部变量的生命周期超出了当前函数的作用域，导致原本应该分配在**栈（Stack，速度极快且自动销毁）<strong>上的对象，被迫分配到了</strong>堆（Heap，速度慢且依赖GC清理）**上。</mark></p>
+<p><strong>2. 常见触发场景（怎么发生的）：</strong></p>
+<ul>
+<li><mark>将方法内部 new 出来的对象，<strong>作为返回值</strong>抛给了外部。</mark></li>
+<li><mark>将局部对象<strong>赋值给了全局变量</strong>或外部类的属性。</mark></li>
+</ul>
+<p><strong>3. 带来的影响（有什么坏处）：</strong><br><strong>它不是内存泄漏</strong>（对象最终还是会被回收），但它是<strong>性能杀手</strong>。<mark>逃逸到堆上的对象越多，触发**垃圾回收（GC）**的频率就越高，容易导致程序卡顿（STW）和分配效率下降。</mark></p>
+<p><strong>4. JVM 的反制手段（逃逸分析）：</strong><br>现代 Java 虚拟机（JDK 1.6+）默认开启了**“逃逸分析”<strong>技术。JVM 在编译时会偷偷检查：如果发现一个对象只在方法内部使用（*<em>未发生逃逸*</em>），JVM 就会把它优化在**栈上分配</strong>（或者打散成标量）。方法一结束直接灰飞烟灭，<strong>完全不需要 GC 参与</strong>，速度极快。</p>
+<h2 id="反射能修改类的前提是什么，结合着JVM底层模型原理说"><a href="#反射能修改类的前提是什么，结合着JVM底层模型原理说" class="headerlink" title="反射能修改类的前提是什么，结合着JVM底层模型原理说"></a><mark>反射能修改类的前提是什么，结合着JVM底层模型原理说</mark></h2><p>反射生效的前提是<mark>类已经被 JVM 加载并生成 Class 对象</mark>，通过 Class 获取字段或方法元数据后，利用 <mark>Field&#x2F;Method 内部保存的偏移量</mark>定位到堆中对象实例数据或静态区数据进行修改。对于 private 成员，需要通过 setAccessible(true) 关闭访问检查，但反射只能修改运行时数据，不能修改类结构，因为类元数据在加载后已经固定在元空间中。</p>
+<p><strong>结合 JVM 模型原理解析：</strong></p>
+<ol>
+<li><strong>类的加载与存储（方法区&#x2F;元空间）</strong>：<br>当我们用 Java 写完代码编译成 .class 字节码文件后，JVM 启动运行。当你第一次使用某个类（或者通过 Class.forName() 主动加载）时，类加载器会将 .class 文件的二进制数据读入内存。<br>这些<strong>类结构元数据</strong>（包括常量池、字段描述、方法字节码、父类信息等）被存储在 JVM 的 <strong>方法区（Method Area，在 Java 8 之后称为元空间 Metaspace，位于本地内存中）</strong>。<br><em>原理说明：方法区就像是存放“汽车图纸”的档案馆。图纸一旦放进去，它的结构就定型了。</em></li>
+<li><strong>反射的入口（Java 堆中的 Class 对象）</strong>：<br>在类被加载到方法区的同时，JVM 会在 <strong>Java 堆（Heap）</strong> 中自动创建一个对应的 java.lang.Class 类的实例对象。<br><strong>这个 Class 对象就是反射的绝对核心前提。</strong> 它是一个“镜子”或者说是访问方法区元数据的“代理人”。反射 API（如 getDeclaredFields()）本质上都是在向这个分配在堆中的 Class 对象发起查询。</li>
+<li><strong>如何越权修改 private 属性的底层逻辑</strong>：<br>假设你通过反射拿到一个 private 字段并调用 field.setAccessible(true)，然后 field.set(obj, value)。<ul>
+<li><strong>JVM 层面的阻拦</strong>：正常情况下，Java 语言层面的访问控制（public&#x2F;private）是在编译期和 JVM 运行期的解析阶段进行检查的。</li>
+<li><strong>反射的绕过</strong>：setAccessible(true) 会将该 Field 对象内部的一个 override 标志位设为 true。当 JVM 执行反射赋值调用时（底层通常通过 Unsafe 类或 JNI 本地方法），会检查这个标志位。如果为 true，JVM 就会<strong>跳过 Java 语言级别的访问控制检查</strong>。</li>
+<li><strong>内存偏移量操作</strong>：JVM 会根据方法区中的元数据，计算出该字段在特定对象 obj 所在的堆内存区块中的<strong>具体内存偏移量（Offset）</strong>。然后，JVM 绕过正常的面向对象逻辑，直接往那个计算好的<strong>内存绝对地址</strong>中写入新的 value。</li>
+</ul>
+</li>
+</ol>
+<h2 id="那元空间的内存泄漏了解吗"><a href="#那元空间的内存泄漏了解吗" class="headerlink" title="那元空间的内存泄漏了解吗"></a>那元空间的内存泄漏了解吗</h2><p><strong>1. 什么是元空间？存的是什么？</strong></p>
+<p>在 JDK 8 之前，类的元数据存放在永久代（PermGen）中；JDK 8 之后，永久代被移除，取而代之的是元空间（Metaspace）。</p>
+<ul>
+<li><strong>位置：</strong> 元空间使用的是<strong>本地内存（Native Memory）</strong>，不再受限于 JVM 堆的大小，它的上限受限于操作系统的可用物理内存（虽然通常我们会通过 -XX:MaxMetaspaceSize 加以限制）。</li>
+<li><strong>存储内容：</strong> 它主要存储了由类加载器（ClassLoader）加载的<strong>类的元数据信息（Klass 模型）</strong>，包括：类的结构、方法、字段、常量池（运行时常量池）、以及<strong>编译后的代码</strong>等。</li>
+</ul>
+<p><strong>2. 为什么会发生元空间泄漏？（核心原因）</strong></p>
+<p>元空间的内存回收机制与堆内存不同。<strong>一个类被卸载（卸载类才能回收其在元空间的内存）的条件极其苛刻，必须同时满足三个条件：</strong></p>
+<ol>
+<li>该类的所有实例对象都已经被 GC 回收了。</li>
+<li>加载该类的 ClassLoader 实例已经被 GC 回收了。</li>
+<li>该类没有在任何地方被引用（包括反射）。</li>
+</ol>
+<p><strong>导致泄漏的根本原因在于：大量的类被动态生成，但加载它们的 ClassLoader 却因为某种原因被“强引用”住了，导致这些动态生成的类及其元数据永远无法被卸载，最终撑爆元空间，抛出 java.lang.OutOfMemoryError: Metaspace。</strong></p>
+<p><strong>3. 典型的罪魁祸首（生产环境真实案例）</strong></p>
+<ul>
+<li><strong>过度使用动态代理框架（如 CGLib, ASM）：</strong><ul>
+<li>Spring AOP、MyBatis 拦截器等底层都大量使用 CGLib 动态生成子类。如果在使用这些框架时配置不当，或者在业务代码中<strong>频繁且不复用地动态生成大量的代理类</strong>，就会导致元空间迅速膨胀。</li>
+</ul>
+</li>
+<li><strong>反射的滥用（Inflation 机制）：</strong><ul>
+<li>正如前面所说，当 Method.invoke() 调用次数超过 15 次时，JVM 为了提升性能，会动态生成一个名为 GeneratedMethodAccessorXXX 的全新 Java 类。如果系统中有海量的反射调用（特别是调用不同的方法），会生成海量的这种小碎片类填满元空间。</li>
+</ul>
+</li>
+</ul>
+<h2 id="full-gc-太频繁了，怎么解决"><a href="#full-gc-太频繁了，怎么解决" class="headerlink" title="full gc 太频繁了，怎么解决"></a>full gc 太频繁了，怎么解决</h2><p>频繁 Full GC 是非常严重的问题，因为它是以 Stop-The-World（系统卡顿）为代价的。</p>
+<p>要解决这个问题，必须遵循 <strong>“发现现象 -&gt; 抓取证据 -&gt; 定位原因 -&gt; 对症下药”</strong> 的流程。</p>
+<p><strong>第一步：现象确认与监控（发现问题）</strong></p>
+<ul>
+<li><strong>现象</strong>：系统响应突然变慢，CPU 偶尔飙高，通过 jstat -gcutil 看到 FGC 次数飞速增加。</li>
+<li><strong>目标</strong>：确认到底是 <strong>老年代 (Old)</strong> 满了，还是 <strong>元空间 (Metaspace)</strong> 满了导致的 Full GC。</li>
+</ul>
+<p><strong>第二步：抓取证据（保留现场）</strong></p>
+<p>必须拿到现场的内存快照，否则就是瞎猜。</p>
+<ol>
+<li><strong>线上直接生成 (可能卡顿，慎用)</strong>：jmap -dump:format&#x3D;b,file&#x3D;heap.hprof <pid></li>
+<li><strong>设置 OOM 自动抓取 (防患于未然)</strong>：确保启动参数配了 -XX:+HeapDumpOnOutOfMemoryError。</li>
+</ol>
+<p><strong>第三步：使用 MAT 离线分析（定位元凶）</strong></p>
+<p>把 heap.hprof 下载到本地，用 Eclipse MAT 打开。</p>
+<ol>
+<li>看 <strong>Leak Suspects</strong>（内存泄漏嫌疑人）。</li>
+<li>点开 <strong>Dominator Tree</strong>（支配树），按占用大小排序。</li>
+<li>找到占用最大的几个对象，右键 <strong>Path to GC Roots</strong>。</li>
+<li>顺藤摸瓜，找出是哪一行代码、哪个集合抓着这些对象不放。</li>
+</ol>
+<p><strong>第四步：常见原因及对症下药（面试重点）</strong></p>
+<p>根据 MAT 的分析结果，问题通常跑不出以下四种：</p>
+<p><strong>1. 内存泄漏 (Memory Leak) —— 治本</strong></p>
+<ul>
+<li><strong>表现</strong>：每次 Full GC 后，老年代内存不但没降下来，反而呈阶梯状上升。</li>
+<li><strong>常见元凶</strong>：<ul>
+<li><strong>静态集合类</strong>：static List 只 add 从不 remove。</li>
+<li><strong>ThreadLocal</strong>：线程池中的线程用完没调用 remove()。</li>
+</ul>
+</li>
+<li><strong>解决</strong>：修 Bug。</li>
+</ul>
+<p><strong>2. 大对象直接进老年代 (Large Objects) —— 优化代码</strong></p>
+<ul>
+<li><strong>表现</strong>：没有内存泄漏，但经常有几十 MB 的大对象产生。</li>
+<li><strong>常见元凶</strong>：SQL 查库没加 limit（比如一次查出 10 万条用户数据），或者 Excel 导出时全量加载到内存。</li>
+<li><strong>解决</strong>：<ul>
+<li>代码层面：分批查询、流式读取。</li>
+<li>参数层面：如果确实需要大对象，适当调大 -XX:PretenureSizeThreshold 的值（仅对 Serial&#x2F;ParNew 有效）。</li>
+</ul>
+</li>
+</ul>
+<p><strong>3. 新生代太小导致对象过早晋升 (Premature Promotion) —— 调参</strong></p>
+<ul>
+<li><strong>表现</strong>：很多短命的朝生夕死对象，因为 Survivor 区不够大，被动态年龄判断机制直接“挤”到了老年代。</li>
+<li><strong>解决</strong>：<ul>
+<li>调大年轻代比例：增大 -Xmn，或者调整 -XX:NewRatio。</li>
+<li>调大 Survivor 区比例：调整 -XX:SurvivorRatio。</li>
+<li>调大晋升年龄：-XX:MaxTenuringThreshold&#x3D;15。</li>
+</ul>
+</li>
+</ul>
+<p><strong>4. 元空间被打满 (Metaspace Full)</strong></p>
+<ul>
+<li><strong>表现</strong>：老年代没满，但 Metaspace 满了。</li>
+<li><strong>常见元凶</strong>：应用中大量使用了 CGLib 等动态代理技术，疯狂生成新类而不卸载。</li>
+<li><strong>解决</strong>：调大 -XX:MaxMetaspaceSize。</li>
+</ul>
+<p><strong>总结话术：</strong></p>
+<blockquote>
+<p>“排查频繁 Full GC，我会先看监控，确认是老年代还是元空间满。如果是老年代问题，我一定会通过 jmap 导出一个 <strong>Heap Dump</strong> 文件。</p>
+<p>然后用 <strong>MAT</strong> 分析这个文件，看是出现了<strong>内存泄漏</strong>（如 ThreadLocal 未清理），还是因为<strong>一次性加载了超大对象</strong>（如全表查询）。</p>
+<p>如果代码没问题，只是流量太大，我会检查 JVM 参数，通常是因为<strong>年轻代太小</strong>，导致本该在 Young GC 中死掉的对象提前晋升到了老年代。我会尝试调大 -Xmn，或者直接切换到对大内存更友好的 <strong>G1 垃圾回收器</strong>。”</p>
+</blockquote>
+<h2 id="为什么要打破双亲委派机制"><a href="#为什么要打破双亲委派机制" class="headerlink" title="为什么要打破双亲委派机制"></a><mark>为什么要打破双亲委派机制</mark></h2><p><strong>场景一：解决包的“版本隔离”问题（以 Tomcat 为例）</strong></p>
+<p>这是最常见的必须打破双亲委派的场景。</p>
+<p><strong>痛点：</strong><br>假设你在一台服务器上部署了一个 Tomcat，这个 Tomcat 里面运行了两个 Web 网站（App1 和 App2）。</p>
+<ul>
+<li>App1 使用了 Spring 4.0 版本。</li>
+<li>App2 使用了老旧的 Spring 3.0 版本。</li>
+</ul>
+<p><strong>如果遵守双亲委派机制会发生什么？</strong><br>Tomcat 的公共类加载器（父加载器）会先去加载 Spring。如果它先加载了 App1 的 Spring 4.0，当 App2 启动时，也会往上找，父类说：“我已经加载过 Spring 了，直接给你用。” 结果 App2 被强行塞入了 4.0 版本，导致大量 API 找不到，程序直接崩溃。</p>
+<p><strong>如何打破（Tomcat 的做法）：</strong><br>Tomcat 重写了 ClassLoader，为每一个部署的 Web 应用创建了一个专属的 WebAppClassLoader。<br>它<strong>逆转了规则</strong>：对于 Web 应用自己 WEB-INF&#x2F;classes 和 WEB-INF&#x2F;lib 目录下的类，<strong>自己优先加载，找不到才去问父类</strong>。<br>这样，App1 和 App2 各自拥有独立的沙箱，各自加载各自版本的 Spring，完美实现了<strong>类隔离</strong>。</p>
+<p><em>(注：当然，Tomcat 对 java.lang.* 等核心基础类依然保持向上委派，防止基础安全问题。)</em></p>
+<p><strong>场景二：解决基础类“无法向下调用”的问题（SPI 与 JDBC 开发）</strong></p>
+<p>双亲委派机制有一个致命的逻辑漏洞：<strong>上级类加载器，看不见下级类加载器加载的类。</strong></p>
+<p><strong>痛点：</strong><br>Java 在核心库（rt.jar）中定义了数据库的标准接口 java.sql.Driver，这个接口是由最顶层的 <strong>Bootstrap ClassLoader</strong> 加载的。<br>但是，具体的实现类（比如 MySQL 的 mysql-connector-java.jar、Oracle的驱动）是由第三方厂商提供的，放在项目的 classpath 下，只能由底层的 <strong>Application ClassLoader</strong> 加载。</p>
+<p>这就产生了一个悖论：<br>核心库的 DriverManager（Bootstrap加载）在初始化时，需要去实例化具体的 MySQL 驱动类。但是最顶层的大佬（Bootstrap）<strong>根本看不见</strong>底下小弟（Application）加载的类！</p>
+<p><strong>如何打破（JDK 的官方“作弊”）：</strong><br>为了解决这个 SPI（Service Provider Interface）问题，Java 引入了 <strong>线程上下文类加载器（Thread Context ClassLoader, TCCL）</strong>。<br>简单来说，它开了一个后门：父类加载器可以通过请求当前线程拿到底层的 Application ClassLoader，然后<strong>反向指使</strong>底层加载器去把具体的实现类（MySQL驱动）加载上来。<br>这就完全破坏了“严格向上委派”的原则，变成了“向下索取”。</p>
+<p><strong>场景三：实现代码的“热部署 &#x2F; 热更新”（OSGi &#x2F; 增量编译）</strong></p>
+<p><strong>痛点：</strong><br>在默认的双亲委派模型下，一个类（全限定名相同）被一个 ClassLoader 加载后，就永远驻留在内存中了。如果你修改了 .java 文件并重新编译成 .class，JVM 是不会重新加载它的（必须重启服务器）。</p>
+<p>但在现代开发中（比如 IDEA 的热部署 JRebel、各种游戏服务器的热更新），我们希望<mark><strong>不重启服务器就能让修改的代码生效</strong>。</mark></p>
+<p><strong>如何打破：</strong><br>做法非常暴力：既然一个 ClassLoader 只能加载一次，那我就把<strong>原来的 ClassLoader 连同它加载的类一起扔掉（垃圾回收）！</strong><br>当类被修改时，系统会动态创建一个<strong>全新的自定义 ClassLoader</strong>，由这个新的加载器去读取新的 .class 文件。</p>
+<p>著名的 Java 模块化标准 <strong>OSGi</strong> 就是打破双亲委派的集大成者。它的类加载器层级不是树状的，而是<strong>网状</strong>的。各个 Bundle（模块）之间可以互相委派加载，规则极其复杂，完全抛弃了传统的自底向上的双亲委派机制，从而实现了极致的动态模块化和热拔插。</p>
+<hr>
 
                 
               </div>

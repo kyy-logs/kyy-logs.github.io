@@ -45,7 +45,7 @@
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260107000636596-1778643787579.png">
 <meta property="og:image" content="https://kyy-logs.github.io/img/blog/image-20260107000723074-1778643787579.png">
 <meta property="article:published_time" content="2026-04-11T04:30:30.000Z">
-<meta property="article:modified_time" content="2026-05-13T03:48:12.316Z">
+<meta property="article:modified_time" content="2026-10-01T12:47:15.405Z">
 <meta property="article:author" content="Yangyang Kong">
 <meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary_large_image">
@@ -404,7 +404,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          12k 字
+          15k 字
         
       </span>
     
@@ -415,7 +415,7 @@
         
         
         
-          104 分钟
+          126 分钟
         
       </span>
     
@@ -1174,6 +1174,134 @@
 <li><strong>位置</strong>：在用户空间的最高地址处（紧挨着内核空间）。</li>
 <li><strong>存放什么</strong>：存放运行程序时传入的参数（如 .&#x2F;my_program arg1 arg2 中的 arg1 等）以及系统的环境变量。</li>
 </ul>
+<h2 id="面试真题"><a href="#面试真题" class="headerlink" title="面试真题"></a>面试真题</h2><h3 id="进程的内存布局-堆，栈，代码段（程序机器指令（可执行代码）），数据段（已初始化的全局变量、静态变量），BSS段（未初始化的"><a href="#进程的内存布局-堆，栈，代码段（程序机器指令（可执行代码）），数据段（已初始化的全局变量、静态变量），BSS段（未初始化的" class="headerlink" title="进程的内存布局(堆，栈，代码段（程序机器指令（可执行代码）），数据段（已初始化的全局变量、静态变量），BSS段（未初始化的)"></a><mark>进程的内存布局(堆，栈，代码段（程序机器指令（可执行代码）），数据段（已初始化的全局变量、静态变量），BSS段（未初始化的)</mark></h3><h3 id="IO模型：同步IO跟异步IO的概念是什么？有什么区别？阻塞IO跟非阻塞IO的概念是什么？（追问）同步-异步-与-阻塞-非阻塞-这四者之间的关系是什么？"><a href="#IO模型：同步IO跟异步IO的概念是什么？有什么区别？阻塞IO跟非阻塞IO的概念是什么？（追问）同步-异步-与-阻塞-非阻塞-这四者之间的关系是什么？" class="headerlink" title="IO模型：同步IO跟异步IO的概念是什么？有什么区别？阻塞IO跟非阻塞IO的概念是什么？（追问）同步&#x2F;异步 与 阻塞&#x2F;非阻塞 这四者之间的关系是什么？"></a>IO模型：同步IO跟异步IO的概念是什么？有什么区别？阻塞IO跟非阻塞IO的概念是什么？（追问）同步&#x2F;异步 与 阻塞&#x2F;非阻塞 这四者之间的关系是什么？</h3><ul>
+<li><strong>阻塞 I&#x2F;O (Blocking I&#x2F;O)</strong><ul>
+<li><strong>概念</strong>：当我们发起一个 read() 系统调用时，如果内核发现数据还没准备好，那么这个发起调用的<strong>应用程序线程会被立刻挂起（阻塞&#x2F;Block）</strong>，让出 CPU 执行权，直到数据准备好并拷贝完成，read() 调用才会返回。</li>
+<li><strong>比喻（去餐厅吃饭）</strong>：你点完菜后，就<strong>坐在座位上啥也不干，一直傻等</strong>，直到服务员把菜端到你面前，你才能继续做别的事。</li>
+<li><strong>优点</strong>：代码写起来最简单、最直观。</li>
+<li><strong>缺点</strong>：一个线程在同一时间只能处理一个 I&#x2F;O 请求，并发能力极差。</li>
+</ul>
+</li>
+<li><strong>非阻塞 I&#x2F;O (Non-blocking I&#x2F;O)</strong><ul>
+<li><strong>概念</strong>：当我们发起 read() 调用时，如果数据还没准备好，内核<strong>不会挂起你的线程，而是立刻返回一个错误码（如 EAGAIN&#x2F;EWOULDBLOCK）</strong>。</li>
+<li><strong>比喻</strong>：你点完菜后，<strong>不傻等</strong>。每隔一分钟就跑去问服务员：“菜好了没？” 服务员说“没好”，你就回去玩会儿手机；再说“没好”，你又回去玩会儿手机…直到服务员说“好了”，你才开始吃饭。</li>
+<li><strong>缺点</strong>：这种**轮询（Polling）**的方式会极大地消耗 CPU 资源（因为你的线程一直在忙着问）。</li>
+</ul>
+</li>
+</ul>
+<p><strong>追问三：同步 I&#x2F;O vs. 异步 I&#x2F;O (关注点：数据拷贝阶段谁来做？)</strong></p>
+<p>“<strong>‘同步’和‘异步’，描述的是当数据准备好后，负责把数据从内核拷贝到用户空间这个动作，到底是由谁来完成的。</strong>”</p>
+<ul>
+<li><strong>同步 I&#x2F;O (Synchronous I&#x2F;O)</strong><ul>
+<li><strong>概念</strong>：即使在非阻塞模式下，当轮询到数据已经准备好了，应用程序<strong>必须自己发起第二次系统调用</strong>，并且<strong>主动等待</strong>内核把数据拷贝到自己的用户空间内存中。在拷贝完成前，应用程序依然是阻塞的。</li>
+<li><strong>比喻</strong>：服务员告诉你菜好了，但只是放在了出餐口。你<strong>必须自己走到出餐口，等着服务员把菜打包好，递到你手里</strong>，你才能走。</li>
+<li><strong>关键点</strong>：<strong>阻塞 I&#x2F;O、非阻塞 I&#x2F;O、以及 I&#x2F;O 多路复用（select&#x2F;epoll）都属于同步 I&#x2F;O 的范畴！</strong> <mark>因为它们在最终的“数据拷贝”阶段，都需要应用程序自己去等待和处理。</mark></li>
+</ul>
+</li>
+<li><strong>异步 I&#x2F;O (Asynchronous I&#x2F;O)</strong><ul>
+<li><strong>概念</strong>：这是最理想的模式。我们发起一个 aio_read() 调用后，<strong>立刻就能返回，然后去干别的事</strong>。</li>
+<li><strong>比喻</strong>：你点完菜，告诉服务员：“菜好了直接送到我座位上”，然后你就戴上耳机专心玩游戏了。服务员不仅负责把菜做好，还负责把菜<strong>端到你面前</strong>。等菜到了，你只需要抬头吃就行了。</li>
+<li><strong>关键点</strong>：从数据准备到数据拷贝的<mark><strong>整个过程，都是由操作系统内核独立完成的</strong></mark>。应用程序只需要在最后接收一个“完成通知（Callback）”即可。这是真正的“无等待”。</li>
+</ul>
+</li>
+</ul>
+<h3 id="cas在操作系统上的底层实现"><a href="#cas在操作系统上的底层实现" class="headerlink" title="cas在操作系统上的底层实现"></a>cas在操作系统上的底层实现</h3><p><strong>CAS 原理与实现</strong>：CAS 是原子操作，通过 <mark>CPU 提供的原子指令</mark>（如 x86 的 <code>CMPXCHG</code> 或 ARM 的 <code>LDREX/STREX</code>）实现，用户态直接操作内存并循环重试，实现无锁同步。</p>
+<h3 id="进程在执行fork操作的时候，子进程会继承父进程的什么信息？"><a href="#进程在执行fork操作的时候，子进程会继承父进程的什么信息？" class="headerlink" title="进程在执行fork操作的时候，子进程会继承父进程的什么信息？"></a>进程在执行fork操作的时候，子进程会继承父进程的什么信息？</h3><p><strong>第一部分：内存数据与运行状态 (Memory &amp; Execution Context)</strong></p>
+<p>这是最核心的部分。子进程会继承父进程几乎所有的用户空间内存快照。</p>
+<ol>
+<li><mark><strong>虚拟内存空间的完整克隆：</strong></mark><ul>
+<li><strong>代码段 (Text Segment)：</strong> 继承父进程执行的机器指令（代码）。<em>（注意：代码段通常是只读的，所以父子进程在物理内存中实际上是<strong>共享</strong>同一份代码的。）</em></li>
+<li><strong>数据段 (Data Segment) &amp; BSS 段：</strong> 继承父进程中已初始化和未初始化的全局变量、静态变量。</li>
+<li><strong>堆区 (Heap)：</strong> 继承父进程中通过 malloc&#x2F;new 动态分配的内存数据。</li>
+<li><strong>栈区 (Stack)：</strong> 继承父进程中所有的局部变量、方法调用栈和执行现场。</li>
+</ul>
+</li>
+<li><mark><strong>CPU 寄存器状态：</strong></mark><ul>
+<li><strong>程序计数器 (PC &#x2F; EIP)：</strong> 这是最关键的一点。子进程继承了父进程的 PC 值，这意味着<strong>子进程从 fork() 调用返回后的下一条指令开始执行</strong>，而不是从头开始运行程序。</li>
+<li>其他通用寄存器的值也会被继承。</li>
+</ul>
+</li>
+</ol>
+<p><mark><strong>【面试高分亮点：写时复制 COW】</strong></mark><br>“面试官，这里必须提一下，现代操作系统在克隆上述的数据段、堆和栈时，并不会立刻在物理内存中复制一份一模一样的数据（那样极其耗时且浪费内存）。<br>而是让父子进程的虚拟地址<strong>映射到同一块物理内存</strong>，并将这块内存标记为‘只读’。<br>只有当父进程或子进程试图**修改（Write）*<em>某一块内存页时，内核才会触发缺页中断，真正为修改方在物理内存中拷贝一份该页的副本。这就是著名的*<em>写时复制 (Copy-on-Write)</em></em> 技术，它使得 fork() 的速度极快。”</p>
+<p><strong>第二部分：<mark>文件系统相关资源 (File System Resources)</strong></mark></p>
+<p>这也是极其容易踩坑，且在实际并发编程中必须要处理好的部分。</p>
+<ol>
+<li><strong>打开的文件描述符 (File Descriptors, FD)：</strong><ul>
+<li>子进程会继承父进程所有已经打开的文件描述符表。</li>
+<li><strong>深度理解：</strong> 这里的继承是指“浅拷贝”。父子进程的 FD 指向的是操作系统内核中<strong>同一个打开的文件表项（Open File Table Entry）</strong>。</li>
+<li><strong>导致的现象：</strong> 这意味着父子进程<strong>共享相同的文件偏移量（File Offset）</strong>。如果父进程读了文件的前 10 个字节，子进程接着读，会从第 11 个字节开始读。如果两边同时往一个文件里写数据，内容会交错混合。</li>
+<li><em>（Socket 也是文件描述符，所以子进程也能继承父进程建立的网络连接）。</em></li>
+</ul>
+</li>
+<li><strong>当前工作目录 (Current Working Directory) 和根目录 (Root Directory)。</strong></li>
+<li><strong>文件创建掩码 (umask)：</strong> 决定了新创建文件的默认权限。</li>
+</ol>
+<p><strong>第三部分：进程属性与控制信息 (Process Attributes &amp; Control)</strong></p>
+<p>子进程会继承父进程大部分的环境和身份标识。</p>
+<ol>
+<li><strong>环境变量 (Environment Variables)：</strong> 如 PATH, HOME 等。</li>
+<li><strong>用户和组 ID：</strong> 继承真实的 UID (Real UID)、有效的 UID (Effective UID)、真实的 GID 等权限标识。</li>
+<li><strong>信号处理方式 (Signal Dispositions)：</strong><ul>
+<li>继承父进程对某个信号是“忽略”、“捕获”还是“默认处理”。</li>
+<li><em>（注：虽然继承了处理方式，但父进程未决的挂起信号 pending signals 是<strong>不会</strong>被继承的，因为那属于父进程自己的未处理事件）。</em></li>
+</ul>
+</li>
+<li><strong>资源限制 (Resource Limits)：</strong> 如通过 ulimit 设置的打开文件数上限、CPU 时间上限等。</li>
+<li><strong>控制终端 (Controlling Terminal) 和进程组 ID &#x2F; 会话 ID。</strong></li>
+</ol>
+<p><strong>面试进阶追问：子进程“没有”继承什么？（独有的信息）</strong></p>
+<p>为了展现知识的完整性，你可以主动提一下父子进程的不同点：</p>
+<p>“虽然子进程几乎继承了所有，但为了在操作系统中区分它们，内核必须赋予子进程一些<strong>独有的、不继承的信息</strong>：</p>
+<ol>
+<li><strong>进程 ID (PID)：</strong> 子进程拥有系统分配的全新的、唯一的 PID。</li>
+<li><strong>父进程 ID (PPID)：</strong> 子进程的 PPID 会被设置为执行 fork() 的那个父进程的 PID。</li>
+<li><strong>fork() 的返回值：</strong> 在父进程中，fork() 返回子进程的 PID；在子进程中，fork() 返回 0。这是我们在代码中写 if (pid &#x3D;&#x3D; 0) 来区分父子进程逻辑的唯一依据。</li>
+<li><strong>资源统计信息清零：</strong> 子进程的 CPU 占用时间（tms_utime, tms_stime 等）、缺页中断次数等统计信息会被清零。</li>
+<li><strong>未决信号 (Pending Signals)：</strong> 父进程中尚未处理的信号不会被子进程继承。</li>
+<li><strong>文件锁 (Record Locks &#x2F; File Locks)：</strong> 父进程在文件上加的锁，子进程不会继承（否则会引发严重的并发冲突）。</li>
+</ol>
+<h3 id="用户态和内核态之间转换的时候发生了什么？"><a href="#用户态和内核态之间转换的时候发生了什么？" class="headerlink" title="用户态和内核态之间转换的时候发生了什么？"></a>用户态和内核态之间转换的时候发生了什么？</h3><p>当用户态切换到内核态的时候，实际上发生了一次非常严格的**“门禁式”**切换。为了保证安全性，操作系统并不是简单的“跳转”过去，而是经历了非常严谨的步骤：</p>
+<p><strong>转换的触发条件（什么情况下会发生？）</strong></p>
+<ol>
+<li><strong>系统调用（System Call）：</strong> 用户程序主动请求内核服务，如 read(), write(), fork(), malloc() 等。</li>
+<li><strong>异常（Exception）：</strong> 当程序发生缺页中断（Page Fault）、除 0 等异常时。</li>
+<li><strong>硬件中断（Hardware Interrupt）：</strong> 如网卡收到数据包、键盘按键、时钟中断等。</li>
+</ol>
+<p><strong>转换的底层发生了什么？（具体的执行步骤）</strong></p>
+<p>当触发上述任一条件时，CPU 硬件和操作系统内核会协同完成以下“原子性”动作：</p>
+<ol>
+<li><strong>保存用户态现场（Context Save）：</strong><ul>
+<li>CPU 暂停当前用户态程序的执行。</li>
+<li>将当前所有的<mark>**通用寄存器、程序计数器（PC，记录下一行代码）、栈指针（SP）<strong>压入</strong>内核栈</mark>（Kernel Stack）*<em>中。</em>（注意：是压入内核栈，而不是用户栈，这是为了防止用户程序恶意破坏现场！）*</li>
+</ul>
+</li>
+<li><strong>栈的切换（Stack Switch）：</strong><ul>
+<li>CPU 将栈指针寄存器（SP）从“用户栈”指向“内核栈”。此时程序已经脱离了用户程序自己的内存区域，处于内核的安全管控区。</li>
+</ul>
+</li>
+<li><strong>特权级切换（Privilege Switch）：</strong><ul>
+<li>CPU 硬件将特权级标志位（CPU 的 Mode Bit）由 <strong>Ring 3（用户态）切换为 Ring 0（内核态）</strong>。此时 CPU 才被允许执行特权指令。</li>
+</ul>
+</li>
+<li><strong>定位并执行内核函数：</strong><ul>
+<li>CPU 通过<mark>**中断向量表（Interrupt Vector Table）**找到对应的内核处理函数</mark>。例如如果是系统调用，会根据系统调用号（System Call Number）去中断向量表里找到对应的函数（如 sys_read）去执行真正的底层逻辑。</li>
+</ul>
+</li>
+<li><strong>内核逻辑执行：</strong><ul>
+<li>执行内核代码，操作网卡、磁盘、分配内存等。</li>
+</ul>
+</li>
+<li><strong><mark>恢复现场并切回用户态</mark>（Context Restore）：</strong><ul>
+<li>内核执行完毕后，执行特殊的返回指令（如 iret）。</li>
+<li>将内核栈中保存的寄存器、PC、SP 弹出并重新加载回 CPU。</li>
+<li>将特权级由 Ring 0 切换回 Ring 3。</li>
+</ul>
+</li>
+<li><strong>继续执行：</strong><ul>
+<li>PC 指针指向用户程序原本被中断的位置，程序在用户态继续无缝执行。</li>
+</ul>
+</li>
+</ol>
 
                 
               </div>
