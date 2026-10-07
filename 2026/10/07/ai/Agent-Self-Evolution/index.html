@@ -1,0 +1,1358 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/cat.ico">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Yangyang Kong">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="四条进化路线的原理、项目比较和实践方法，重点展开上下文闭环与技能资产化。 整理日期：2026年10月7日 1 自进化的四条路线自进化讨论的是：Agent 能否依据真实任务、执行反馈和用户纠正，持续更新自身可使用的资产，并让更新影响后续任务表现。原文按闭环位置与更新对象分为四条路线。1 本指南覆盖四条路线，详细展开上下文闭环与技能资产化。第三条说明经验如何跨 Agent 流动，第四条说明如何把反馈用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自进化">
+<meta property="og:url" content="https://kyy-logs.github.io/2026/10/07/ai/Agent-Self-Evolution/index.html">
+<meta property="og:site_name" content="多云的小站">
+<meta property="og:description" content="四条进化路线的原理、项目比较和实践方法，重点展开上下文闭环与技能资产化。 整理日期：2026年10月7日 1 自进化的四条路线自进化讨论的是：Agent 能否依据真实任务、执行反馈和用户纠正，持续更新自身可使用的资产，并让更新影响后续任务表现。原文按闭环位置与更新对象分为四条路线。1 本指南覆盖四条路线，详细展开上下文闭环与技能资产化。第三条说明经验如何跨 Agent 流动，第四条说明如何把反馈用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/original-agent-evolution.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/01-overview.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/02-context-loop.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/05-memory-retrieval.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/06-context-projects.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/03-skill-loop.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/07-skill-projects.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/04-memory-to-skill.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/08-collective-loop.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/09-policy-loop.png">
+<meta property="og:image" content="https://kyy-logs.github.io/img/blog/self-evolution/10-evaluation-loop.png">
+<meta property="article:published_time" content="2026-10-07T09:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-07T08:39:00.037Z">
+<meta property="article:author" content="Yangyang Kong">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="技能资产化">
+<meta property="article:tag" content="自进化">
+<meta property="article:tag" content="记忆管理">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyy-logs.github.io/img/blog/self-evolution/original-agent-evolution.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>自进化 - 多云的小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyy-logs.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":null,"loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"left","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>多云的小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-code-fill"></i>
+                <span>语言</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/language/java/" target="_self">
+                    <i class="iconfont icon-tags-fill"></i>
+                    <span>Java</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/language/spring/" target="_self">
+                    <i class="iconfont icon-tags-fill"></i>
+                    <span>Spring</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-database-fill"></i>
+                <span>数据库</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/database/mysql/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>MySQL</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/database/redis/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>Redis</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/mq/" target="_self">
+                <i class="iconfont icon-interactive-fill"></i>
+                <span>消息队列</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                
+                <span>计算机基础</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>计算机网络</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>操作系统</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/ai/" target="_self">
+                
+                <span>Ai</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/algorithm/" target="_self">
+                <i class="iconfont icon-launch-fill"></i>
+                <span>算法</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/scenario/" target="_self">
+                <i class="iconfont icon-project-fill"></i>
+                <span>场景题</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/opensource/" target="_self">
+                <i class="iconfont icon-github-fill"></i>
+                <span>开源项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="自进化"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-10-07 17:00" pubdate>
+          2026年10月7日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          9.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          76 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="padding-left: 2rem; margin-right: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">自进化</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>四条进化路线的原理、项目比较和实践方法，重点展开上下文闭环与技能资产化。</p>
+<p>整理日期：2026年10月7日</p>
+<h2 id="1-自进化的四条路线"><a href="#1-自进化的四条路线" class="headerlink" title="1 自进化的四条路线"></a>1 自进化的四条路线</h2><p>自进化讨论的是：Agent 能否依据真实任务、执行反馈和用户纠正，持续更新自身可使用的资产，并让更新影响后续任务表现。原文按闭环位置与更新对象分为四条路线。<a target="_blank" rel="noopener" href="https://github.com/datawhalechina/hello-agents/blob/main/Extra-Chapter/Extra10-Agent%E8%87%AA%E8%BF%9B%E5%8C%96.md">1</a></p>
+<p>本指南覆盖四条路线，详细展开上下文闭环与技能资产化。第三条说明经验如何跨 Agent 流动，第四条说明如何把反馈用于参数训练或结构更新。它们可以组合使用，同一个项目也可能同时具备几类机制。</p>
+<p><img src="/../../../img/blog/self-evolution/original-agent-evolution.png" srcset="/img/loading.gif" lazyload alt="原文 Agent 自进化四类闭环与十个代表项目"></p>
+<p>图1 原文总览图，展示四类闭环与十个代表项目。图片来自 <a target="_blank" rel="noopener" href="https://github.com/datawhalechina/hello-agents/blob/main/Extra-Chapter/Extra10-Agent%E8%87%AA%E8%BF%9B%E5%8C%96.md">Datawhale hello-agents 原文</a>，保留原图内容；本文重点展开前两条路线。<a target="_blank" rel="noopener" href="https://github.com/datawhalechina/hello-agents/blob/main/Extra-Chapter/Extra10-Agent%E8%87%AA%E8%BF%9B%E5%8C%96.md">1</a></p>
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>更新对象</th>
+<th>反馈怎样生效</th>
+<th>原文代表项目</th>
+<th>本文安排</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>内建上下文闭环</td>
+<td>记忆、历史索引、项目上下文</td>
+<td>下次任务读取与检索，改变决策依据</td>
+<td>Hermes、Agent Zero</td>
+<td>重点展开，见第3至5节</td>
+</tr>
+<tr>
+<td>技能资产化闭环</td>
+<td>技能说明、脚本、可复用流程</td>
+<td>加载经过验证的操作方法，并持续修正</td>
+<td>Darwin Skill、JiuwenClaw、EvoSkill</td>
+<td>重点展开，见第6至8节</td>
+</tr>
+<tr>
+<td>外部监督或群体智能闭环</td>
+<td>共享记忆、共享技能、外部演化服务</td>
+<td>汇聚多个实例的证据，验证后回流各宿主</td>
+<td>Ultron、OpenSpace、SkillClaw</td>
+<td>概览与衔接，见第9节</td>
+</tr>
+<tr>
+<td>参数、代码或工作流自修改闭环</td>
+<td>模型参数、Agent 代码、工作流结构</td>
+<td>用训练或搜索产生策略候选，经评测后更新</td>
+<td>OpenClaw-RL、Agent Lightning</td>
+<td>概览与边界，见第10节</td>
+</tr>
+</tbody></table>
+<p>这不是必须逐级完成的升级阶梯。第三条主要扩大经验的复用范围；第四条包含不同的更新对象，其中参数更新涉及训练，代码和工作流更新则可以通过生成与搜索完成。后两条也能继续使用前两条的记忆与技能。</p>
+<p>四条路线都需要回答三个问题：更新的依据能否追溯，更新后怎样被使用，以及如何证明它比旧版本更有用。自动修改本身不能作为效果证据。</p>
+<p>快速阅读：先看本节总览与第2节两类重点路线的关系，再看第3至8节的流程和例子；第9至10节补全另外两条路线，第11至12节用于评估和实施。</p>
+<h2 id="2-两条重点路线的关系"><a href="#2-两条重点路线的关系" class="headerlink" title="2 两条重点路线的关系"></a>2 两条重点路线的关系</h2><p>上下文闭环通过保存、检索和更新经验，让 Agent 在后续任务中获得更合适的信息。技能资产化进一步把经验整理成带有适用条件、操作步骤和验证方法的可复用流程。两者都可以在模型权重保持不变的情况下改变行为。</p>
+<p>本文以 Datawhale 的 Agent 自进化章节为起点，重点分析这两类闭环。<a target="_blank" rel="noopener" href="https://github.com/datawhalechina/hello-agents/blob/main/Extra-Chapter/Extra10-Agent%E8%87%AA%E8%BF%9B%E5%8C%96.md">1</a> 项目机制采用官方说明；标为工程建议的架构、字段、判断规则和例子，是为理解与实现而整理的参考方案，不代表所有项目的统一规范。</p>
+<p><img src="/../../../img/blog/self-evolution/01-overview.png" srcset="/img/loading.gif" lazyload alt="两类自进化闭环如何配合"></p>
+<p>图2 两类闭环总览。记忆提供相关信息，技能提供可复用流程，二者均通过后续任务验证收益。根据原文分类及本文内容归纳。<a target="_blank" rel="noopener" href="https://github.com/datawhalechina/hello-agents/blob/main/Extra-Chapter/Extra10-Agent%E8%87%AA%E8%BF%9B%E5%8C%96.md">1</a></p>
+<table>
+<thead>
+<tr>
+<th>比较点</th>
+<th>上下文闭环</th>
+<th>技能资产化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>主要问题</td>
+<td>以前发生了什么 当前有什么约束</td>
+<td>这类任务应该怎样完成</td>
+</tr>
+<tr>
+<td>持久对象</td>
+<td>事实 偏好 项目状态 历史经验</td>
+<td>技能说明 脚本 示例 验证规则</td>
+</tr>
+<tr>
+<td>读取方式</td>
+<td>重要信息直接加载 细节按需检索</td>
+<td>先匹配适用场景 再加载操作流程</td>
+</tr>
+<tr>
+<td>更新方式</td>
+<td>添加 纠正 合并 清理过时信息</td>
+<td>生成候选 测试 升级 或回滚</td>
+</tr>
+<tr>
+<td>主要失效</td>
+<td>召回无关或过时信息 错误归因</td>
+<td>流程泛化过度 步骤失效 评测偏差</td>
+</tr>
+<tr>
+<td>衡量收益</td>
+<td>任务续接正确率 重复错误 检索质量</td>
+<td>新任务成功率 回归表现 执行成本</td>
+</tr>
+</tbody></table>
+<h3 id="用论文复现理解两者"><a href="#用论文复现理解两者" class="headerlink" title="用论文复现理解两者"></a>用论文复现理解两者</h3><p>假设一次复现任务因为预处理顺序错误而失败，修正后通过检查。记忆可以保存该项目的事实、失败原因和证据位置；技能则可以整理出指标异常时的排查顺序、每一步的判断条件及完成标准。这是贯穿全文的假设案例。</p>
+<p>两类闭环不是互斥选项。记忆可以为技能提供证据；技能运行又会产生新轨迹和新经验。一次对话中的反思只能改善当前尝试，只有经验被持久保存并在未来正确使用，才形成跨任务闭环。</p>
+<p>前两条路线通常可以在不训练模型的情况下落地，更新对象也便于检查与版本管理。因此本指南重点解释读写时机、记忆维护、技能验证，以及二者之间如何衔接。</p>
+<h2 id="3-路线一-上下文闭环的执行过程"><a href="#3-路线一-上下文闭环的执行过程" class="headerlink" title="3 路线一 上下文闭环的执行过程"></a>3 路线一 上下文闭环的执行过程</h2><p>工程建议：围绕 Agent 的主循环建立读取路径和写入路径。读取路径决定本次任务看到什么；写入路径决定哪些经验能进入下一次任务。先确保信息能够正确保存、找回和纠正，再扩大自动化范围。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">任务输入 → 读取项目状态 → 检索相关经验 → 组装上下文 → 执行与验证 → 更新记忆和状态 → 后续任务<br></code></pre></td></tr></table></figure>
+
+<p><img src="/../../../img/blog/self-evolution/02-context-loop.png" srcset="/img/loading.gif" lazyload alt="上下文闭环的读取与写入"></p>
+<p>图3 上下文读写流程。上方为本次任务，下面为证据保存、候选提取和更新路径；更新后的信息回到检索环节。工程参考示意。</p>
+<h3 id="任务前读取"><a href="#任务前读取" class="headerlink" title="任务前读取"></a>任务前读取</h3><p>先识别用户、项目、当前目标与环境，再读取该范围内的项目状态和关键约束。只有在需要历史细节时才检索轨迹，例如相似报错、上次修复方式或用户曾经作出的决定。检索结果应保留来源，让 Agent 能继续查证。</p>
+<p>为上下文设置独立预算。稳定且重要的事实可以常驻；长日志和历史原文按需加载。实际预算取决于模型窗口和任务复杂度，还要为当前任务、工具结果及后续推理留出空间。</p>
+<h3 id="任务中观察与校验"><a href="#任务中观察与校验" class="headerlink" title="任务中观察与校验"></a>任务中观察与校验</h3><p>保存用户消息、工具输入输出、执行结果和验证证据。记忆提供诊断线索，当前工具观察负责确认现状。例如上次是依赖冲突，这次应先检查版本和报错，不能仅凭历史记录直接认定原因。</p>
+<h3 id="任务后提取候选记忆"><a href="#任务后提取候选记忆" class="headerlink" title="任务后提取候选记忆"></a>任务后提取候选记忆</h3><p>在用户纠正、排错完成、阶段性验证通过或任务结束时触发整理。提取三个问题的答案：发现了什么，依据是什么，以后在什么情况下有用。一次临时失败或未经确认的模型猜测可以保留在轨迹里，不必立即升级为长期经验。</p>
+<h3 id="写入与维护"><a href="#写入与维护" class="headerlink" title="写入与维护"></a>写入与维护</h3><p>检查候选的范围、证据、重复与冲突。相同结论合并证据；新观察推翻旧结论时更新当前记录，并保留变更来源；已经失效的内容归档或删除。项目状态独立更新，记录实际完成的工作和下一步，而不是泛泛的会话摘要。</p>
+<p>Reflexion 展示了通过反馈生成反思文本、再用于后续尝试的思路。<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2303.11366">9</a> MemGPT 展示了有限上下文与外部记忆之间的信息调度思路。<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2310.08560">10</a> 这些提供设计依据，但不意味着任意反思或检索组合都能自动提升表现。</p>
+<h3 id="最小上下文闭环的参考伪代码"><a href="#最小上下文闭环的参考伪代码" class="headerlink" title="最小上下文闭环的参考伪代码"></a>最小上下文闭环的参考伪代码</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 示意流程，函数名不对应某个项目的真实接口。</span><br>scope = identify_scope(task, user, project, environment)<br>state = load_project_state(scope)<br>memories = retrieve_memories(task, scope)<br>context = assemble_with_budget(task, state, memories)<br>result, trajectory = run_agent(context)<br>evidence = verify_result(result)<br>save_trajectory(trajectory, evidence)<br>candidates = extract_reusable_experience(trajectory, evidence)<br>accepted = check_scope_evidence_conflicts(candidates)<br>update_memories(accepted)<br>update_project_state(result, evidence)<br></code></pre></td></tr></table></figure>
+
+<p>读写接口应保留来源和版本。抽取失败不应破坏任务产出；未验证候选与当前有效记忆分开保存；重新进入任务时读取最新状态，并用当前工具观察检查环境。</p>
+<h2 id="4-路线一-记忆结构与检索策略"><a href="#4-路线一-记忆结构与检索策略" class="headerlink" title="4 路线一 记忆结构与检索策略"></a>4 路线一 记忆结构与检索策略</h2><p>工程建议：区分当前工作上下文、项目状态、事实记忆、经验记忆与原始轨迹。它们可以用文件或数据库实现，重点是语义边界与生命周期清楚，不必一开始就引入复杂的记忆平台。</p>
+<p><img src="/../../../img/blog/self-evolution/05-memory-retrieval.png" srcset="/img/loading.gif" lazyload alt="记忆分层与按需检索流程"></p>
+<p>图4 不同存储经过统一检索与筛选进入本次上下文。不是把所有历史一次性加入提示词。工程参考示意。</p>
+<table>
+<thead>
+<tr>
+<th>信息类型</th>
+<th>例子</th>
+<th>维护方法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>当前上下文</td>
+<td>本轮任务 工具结果 临时判断</td>
+<td>任务推进时更新 超预算时压缩</td>
+</tr>
+<tr>
+<td>项目状态</td>
+<td>环境已安装 实验尚未运行</td>
+<td>依据实际产出更新 支持任务续接</td>
+</tr>
+<tr>
+<td>事实记忆</td>
+<td>数据目录 已确认的环境约束</td>
+<td>修改或重新验证过时事实</td>
+</tr>
+<tr>
+<td>经验记忆</td>
+<td>某种症状的已验证原因与修复</td>
+<td>保留适用条件 反例和来源</td>
+</tr>
+<tr>
+<td>原始轨迹</td>
+<td>完整命令 日志 用户纠正</td>
+<td>保留可追溯证据 按需读取</td>
+</tr>
+</tbody></table>
+<h3 id="一条经验记录的参考字段"><a href="#一条经验记录的参考字段" class="headerlink" title="一条经验记录的参考字段"></a>一条经验记录的参考字段</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">id:</span> <span class="hljs-string">exp-017</span><br><span class="hljs-attr">type:</span> <span class="hljs-string">troubleshooting</span><br><span class="hljs-attr">scope:</span> <span class="hljs-string">project-A</span> <span class="hljs-string">/</span> <span class="hljs-string">environment-v1</span><br><span class="hljs-attr">claim:</span> <span class="hljs-string">指标异常曾由归一化顺序错误引起</span><br><span class="hljs-attr">condition:</span> <span class="hljs-string">该数据集及当前预处理链</span><br><span class="hljs-attr">evidence:</span> <span class="hljs-string">trajectory-041</span> <span class="hljs-string">/</span> <span class="hljs-string">steps-18-23</span><br><span class="hljs-attr">status:</span> <span class="hljs-string">verified</span><br><span class="hljs-attr">last_verified:</span> <span class="hljs-number">2026-10-07</span><br><span class="hljs-attr">supersedes:</span> <span class="hljs-literal">null</span><br></code></pre></td></tr></table></figure>
+
+<p>这些字段是示例，不属于某个项目的固定接口。verified 表示有验证证据，不表示对所有未来环境都成立。证据不足时标记为 candidate；被新证据替代时标记为 superseded，避免继续作为当前事实召回。</p>
+<h3 id="从简单检索逐步扩展"><a href="#从简单检索逐步扩展" class="headerlink" title="从简单检索逐步扩展"></a>从简单检索逐步扩展</h3><p>先按用户、项目和环境过滤，再做关键词检索。积累足够数据后，可以把关键词与语义检索结合，补充重排序和重复折叠。报错码、路径和版本号通常需要精确匹配；相似问题的不同表述可以使用语义匹配。</p>
+<p>排序同时考虑相关性、证据质量和时效性。摘要用于筛选，关键结论回查原始证据。对于冲突记录，优先核对当前观察；无法解决的冲突应明确呈现，不要静默选择一个结论。</p>
+<p>写入可由主 Agent 调用记忆工具，也可由任务后的整理流程处理。后台整理需要控制读写范围，并发更新时使用事务或版本校验，防止两个任务互相覆盖状态。</p>
+<h2 id="5-路线一-Hermes-与-Agent-Zero"><a href="#5-路线一-Hermes-与-Agent-Zero" class="headerlink" title="5 路线一 Hermes 与 Agent Zero"></a>5 路线一 Hermes 与 Agent Zero</h2><p><img src="/../../../img/blog/self-evolution/06-context-projects.png" srcset="/img/loading.gif" lazyload alt="Hermes 和 Agent Zero 的概念流程对照"></p>
+<p>图5 Hermes 强调精简记忆与具体历史的分工，Agent Zero 强调项目资源与状态边界。依据官方说明绘制概念流程，不表示全部内部实现。<a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">2</a><a target="_blank" rel="noopener" href="https://github.com/agent0ai/agent-zero">4</a></p>
+<h3 id="Hermes-的记忆与历史分工"><a href="#Hermes-的记忆与历史分工" class="headerlink" title="Hermes 的记忆与历史分工"></a>Hermes 的记忆与历史分工</h3><p>Hermes 的官方文档区分 MEMORY.md 与 USER.md：前者保存环境事实和经验，后者保存用户偏好。记忆在会话开始时以快照形式提供，具体历史通过 session_search 检索；当前文档描述其会话存储使用 SQLite 与 FTS5。<a target="_blank" rel="noopener" href="https://hermes-agent.nousresearch.com/docs/user-guide/features/memory">2</a></p>
+<p>Hermes 同时支持从经验创建和改进技能，因此它跨越本文的两类路线。<a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">3</a> 工程启示是把关键事实与历史细节分开，让常驻上下文保持精简，并检查记忆是否真的写入、是否被后续会话读取。</p>
+<h3 id="Agent-Zero-的项目边界"><a href="#Agent-Zero-的项目边界" class="headerlink" title="Agent Zero 的项目边界"></a>Agent Zero 的项目边界</h3><p>Agent Zero 提供包含文件、指令、记忆和仓库等资源的项目环境，并强调按项目隔离；工具、技能及内部提示可检查和编辑，也支持多 Agent 协作。<a target="_blank" rel="noopener" href="https://github.com/agent0ai/agent-zero">4</a> 它体现了上下文随工作环境持续积累的路径。</p>
+<p>工程启示是让项目进度与环境状态有明确归属。用户偏好可跨项目使用，项目特有的依赖、数据位置和排错经验则应保留作用范围。长任务交接时，要带上可验证的产出位置和未完成事项。</p>
+<table>
+<thead>
+<tr>
+<th>设计视角</th>
+<th>Hermes</th>
+<th>Agent Zero</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>本文关注点</td>
+<td>精简记忆与跨会话检索</td>
+<td>项目环境与持续状态</td>
+</tr>
+<tr>
+<td>可借鉴机制</td>
+<td>事实笔记 历史查询 技能积累</td>
+<td>项目隔离 资源组织 工作交接</td>
+</tr>
+<tr>
+<td>需要自行验证</td>
+<td>记忆写入 召回与实际使用</td>
+<td>隔离范围 状态一致性与续接</td>
+</tr>
+</tbody></table>
+<h3 id="常见失效及对应措施"><a href="#常见失效及对应措施" class="headerlink" title="常见失效及对应措施"></a>常见失效及对应措施</h3><p>记忆写入了却没有被召回：检查过滤条件、检索词和读取时机。召回了却没有被使用：检查内容是否具体、位置是否合适，以及 Agent 是否理解其适用条件。</p>
+<p>经验越来越多但效果下降：清理重复项，缩小适用范围，纠正错误归因，并保留未验证状态。长对话压缩后无法续接：独立保存项目状态及证据链接，而不是只依赖对话摘要。</p>
+<p>这些项目说明提供机制参考，不是性能排名。选择时应围绕自己的任务验证，而不能仅依据功能清单判断哪个系统更会学习。</p>
+<h2 id="6-路线二-技能资产化的结构与生命周期"><a href="#6-路线二-技能资产化的结构与生命周期" class="headerlink" title="6 路线二 技能资产化的结构与生命周期"></a>6 路线二 技能资产化的结构与生命周期</h2><p>技能资产化把可复用的方法表达为 Agent 能发现、加载和执行的资产。安装一个静态技能完成了复用入口；基于执行反馈提出修改，并通过验证升级技能，才形成演化闭环。</p>
+<p>Agent Skills 规范要求技能目录至少包含 SKILL.md，并使用 YAML 元数据与 Markdown 正文；scripts、references 和 assets 可按需提供。技能通常先暴露名称和描述，匹配后加载正文，详细资源按需读取。<a target="_blank" rel="noopener" href="https://agentskills.io/specification">8</a></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">metric-debug/<br>  SKILL.md<br>  scripts/check_preprocessing.py<br>  references/dataset-notes.md<br>  assets/checklist.md<br></code></pre></td></tr></table></figure>
+
+<h3 id="一个技能应该说清楚什么"><a href="#一个技能应该说清楚什么" class="headerlink" title="一个技能应该说清楚什么"></a>一个技能应该说清楚什么</h3><p>工程建议：名称与描述用于发现；正文明确适用条件、输入与前置检查、操作顺序、条件分支、工具或脚本、失败处理、输出及验证标准。写清不适用条件，可以减少把局部经验泛化为通用指令的问题。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs markdown">---<br>name: metric-debug<br><span class="hljs-section">description: 排查复现实验的指标异常，核对数据与评测过程。</span><br><span class="hljs-section">---</span><br>适用条件：存在论文配置及可比较的运行结果。<br>步骤：先核对划分，再检查预处理和评测口径。<br>异常处理：若关键配置缺失，先补齐证据再下结论。<br>完成标准：检查过程、配置及结果均可追溯。<br></code></pre></td></tr></table></figure>
+
+<p>上面的目录和内容是教学示例。实际技能需要补充具体命令、分支条件与测试；仅写几句原则，仍不足以构成可靠的操作流程。</p>
+<p><img src="/../../../img/blog/self-evolution/03-skill-loop.png" srcset="/img/loading.gif" lazyload alt="技能候选如何成为有效版本"></p>
+<p>图6 技能演化流程。真实任务验证通过后才切换有效版本；证据不足或出现退化时保留候选并修正或回滚。结合原文闭环及三个项目的不同侧重点归纳，非某个项目的原始架构图。<a target="_blank" rel="noopener" href="https://github.com/alchaincyf/darwin-skill">1</a><a target="_blank" rel="noopener" href="https://github.com/sentient-agi/EvoSkill">6</a></p>
+<h3 id="从轨迹到有效版本"><a href="#从轨迹到有效版本" class="headerlink" title="从轨迹到有效版本"></a>从轨迹到有效版本</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">执行证据 → 归因与抽象 → 技能候选 → 结构检查 → 真实任务验证 → 发布有效版本或回滚<br></code></pre></td></tr></table></figure>
+
+<p>候选应记录来源与变更原因。验证同时检查能否加载、能否执行，以及是否改善任务结果。结构检查通过不等于效果提升；一次成功不等于泛化成立。</p>
+<p>更新时尽量一次改变一个可归因因素。保存旧版本、测试结果与变更差异，验证通过后再切换有效版本。多技能存在冲突时明确优先级与选择规则，避免把全部技能同时加入上下文。</p>
+<h3 id="如何发现与选择技能"><a href="#如何发现与选择技能" class="headerlink" title="如何发现与选择技能"></a>如何发现与选择技能</h3><p>先用技能名称和描述匹配任务，再检查输入、环境、作用范围与前置条件。匹配后加载正文，需要时调用脚本或读取参考资料。多个技能都相关时，选择覆盖当前目标的一组最小流程，并明确先后顺序；不要因为技能存在就强制调用。</p>
+<p>技能更新应区分补充局部排错经验与改变主流程。局部经验可以先作为附属记录；改变通用步骤或前置条件时，重新运行关键回归，并记录新旧版本的行为差异。</p>
+<h2 id="7-路线二-三种技能演化方式"><a href="#7-路线二-三种技能演化方式" class="headerlink" title="7 路线二 三种技能演化方式"></a>7 路线二 三种技能演化方式</h2><p><img src="/../../../img/blog/self-evolution/07-skill-projects.png" srcset="/img/loading.gif" lazyload alt="三个技能项目的反馈和更新路径比较"></p>
+<p>图7 用统一粒度比较三个项目的演化路径。Darwin 保留阶段确认，Jiuwen 按策略保存可复用经验，EvoSkill 主要依赖任务集与留出验证。概念归纳示意。<a target="_blank" rel="noopener" href="https://github.com/openJiuwen-ai/jiuwenswarm/blob/develop/docs/en/SkillSelfEvolution.md">5</a><a target="_blank" rel="noopener" href="https://github.com/sentient-agi/EvoSkill">7</a></p>
+<h3 id="Darwin-Skill-优化已有技能"><a href="#Darwin-Skill-优化已有技能" class="headerlink" title="Darwin Skill 优化已有技能"></a>Darwin Skill 优化已有技能</h3><p>Darwin Skill 将单个 SKILL.md 作为可编辑资产，结合结构检查与效果验证，使用独立评审、保留或回滚及人工确认。当前官方 README 描述九维评分体系，原文章中的八维描述对应较早版本。<a target="_blank" rel="noopener" href="https://github.com/alchaincyf/darwin-skill">5</a></p>
+<p>可借鉴的是控制改动范围、独立验证和保留有效基线。评分主要反映该评估流程中的质量；分数提高仍需要用真实任务及独立测试检查，不能推断所有场景都变好。</p>
+<h3 id="Jiuwen-在使用中积累经验"><a href="#Jiuwen-在使用中积累经验" class="headerlink" title="Jiuwen 在使用中积累经验"></a>Jiuwen 在使用中积累经验</h3><p>原文章称为 JiuwenClaw 的项目链接，当前跳转至 JiuwenSwarm。其技能演化文档描述：主 Agent 根据当前任务证据判断经验是否可复用，再按保存策略保留；保存的经验可以在下次技能调用时加载，不必立即合并到 SKILL.md。<a target="_blank" rel="noopener" href="https://github.com/openJiuwen-ai/jiuwenswarm/blob/develop/docs/en/SkillSelfEvolution.md">6</a></p>
+<p>可借鉴的是先保存具体经验，再决定何时整理进正式流程。用户纠正或错误关键词只能作为线索；应判断原因能否归属到该技能、经验是否可复用，避免每次失败都立即改写主文件。</p>
+<h3 id="EvoSkill-使用任务集搜索候选"><a href="#EvoSkill-使用任务集搜索候选" class="headerlink" title="EvoSkill 使用任务集搜索候选"></a>EvoSkill 使用任务集搜索候选</h3><p>EvoSkill 用当前配置运行基准，分析失败后生成技能或提示变体，在留出验证集上评分，以 Git 分支保留表现较好的程序配置。其官方 README 将不依赖基准的演化和日常持续演化列为开发方向。<a target="_blank" rel="noopener" href="https://github.com/sentient-agi/EvoSkill">7</a></p>
+<p>可借鉴的是可重复的任务评测与候选比较。适合拥有一批任务和可判断结果的场景；如果只反复优化同一小组题目，很容易学会迎合评测。最终还需要未参与迭代的测试集。</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>主要反馈</th>
+<th>有效产物</th>
+<th>实施前提</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Darwin</td>
+<td>技能检查与任务验证</td>
+<td>优化后的技能版本</td>
+<td>已有技能及可检查的质量标准</td>
+</tr>
+<tr>
+<td>Jiuwen</td>
+<td>实际使用中的任务证据</td>
+<td>可加载的技能经验与更新</td>
+<td>可靠归因与经验保存策略</td>
+</tr>
+<tr>
+<td>EvoSkill</td>
+<td>基准失败及验证集得分</td>
+<td>技能或提示的候选配置</td>
+<td>任务集 评分器与执行环境</td>
+</tr>
+</tbody></table>
+<p>这三者不是互相替代的固定阶梯。在线经验采集可以提供优化候选，离线评测负责筛选，版本机制负责管理有效资产。组合时仍需明确每个阶段的责任。</p>
+<h2 id="8-记忆到技能的完整例子"><a href="#8-记忆到技能的完整例子" class="headerlink" title="8 记忆到技能的完整例子"></a>8 记忆到技能的完整例子</h2><p>以下是工程示例。假设 Agent 负责复现实验，发现最终指标偏低；检查后确认某个数据集的归一化顺序与论文不同，修正并重新运行小规模验证后，结果符合预期。</p>
+<p><img src="/../../../img/blog/self-evolution/04-memory-to-skill.png" srcset="/img/loading.gif" lazyload alt="从一次排错到可复用技能"></p>
+<p>图8 记忆到技能的完整例子。先保存有范围的经验，再检验方法能否泛化，最终形成可复用技能；箭头表示后续反馈继续回流。假设案例示意。</p>
+<h3 id="第一步-保存本次证据与状态"><a href="#第一步-保存本次证据与状态" class="headerlink" title="第一步 保存本次证据与状态"></a>第一步 保存本次证据与状态</h3><p>轨迹保存原配置、异常结果、诊断过程和修正后的验证产出。项目状态写成“预处理已修正，小规模验证已完成，全量实验待运行”。这些信息用于续接具体任务，不需要先抽象成通用流程。</p>
+<h3 id="第二步-提炼有范围的经验"><a href="#第二步-提炼有范围的经验" class="headerlink" title="第二步 提炼有范围的经验"></a>第二步 提炼有范围的经验</h3><p>候选经验写成“项目 A 在该数据集上曾因归一化顺序不一致导致指标偏低，检查方法为对照预处理配置与样本输出”，并绑定证据。不能写成“指标偏低都应该调整归一化”。</p>
+<h3 id="第三步-在新任务中验证用途"><a href="#第三步-在新任务中验证用途" class="headerlink" title="第三步 在新任务中验证用途"></a>第三步 在新任务中验证用途</h3><p>后续出现类似症状时，召回经验并先检查适用条件。如果新的异常来自数据划分，保留这个反例。重复出现的有效检查方法，加上反例与边界，可以形成更可靠的技能候选。</p>
+<h3 id="第四步-抽象操作流程"><a href="#第四步-抽象操作流程" class="headerlink" title="第四步 抽象操作流程"></a>第四步 抽象操作流程</h3><p>技能按数据版本、划分、预处理、指标口径和随机性依次检查。每一步写明输入、判断依据和下一步；发现差异后先做小规模验证。项目路径、数据位置等具体参数从项目上下文读取，避免写死到通用技能中。</p>
+<h3 id="第五步-验证与发布"><a href="#第五步-验证与发布" class="headerlink" title="第五步 验证与发布"></a>第五步 验证与发布</h3><p>用多种不同原因的指标异常任务，以及正常任务、无关任务进行验证。观察它能否找到原因、是否误用、是否增加不必要操作。验证通过后保留新版本；失败则保留轨迹和候选，继续修正或回滚。</p>
+<table>
+<thead>
+<tr>
+<th>应保留在哪里</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>项目状态</td>
+<td>本次实验进度 产出位置 下一步</td>
+</tr>
+<tr>
+<td>经验记忆</td>
+<td>症状 条件 已验证原因 证据及反例</td>
+</tr>
+<tr>
+<td>技能资产</td>
+<td>可复用检查顺序 分支 脚本与完成标准</td>
+</tr>
+<tr>
+<td>原始轨迹</td>
+<td>每次具体执行的输入 日志与验证结果</td>
+</tr>
+</tbody></table>
+<p>是否提炼成技能，取决于方法能否明确表达和验证，不必机械要求出现固定次数。频繁复用是有用信号，但高频错误经验仍不值得固化。</p>
+<h2 id="9-路线三-外部监督与群体智能"><a href="#9-路线三-外部监督与群体智能" class="headerlink" title="9 路线三 外部监督与群体智能"></a>9 路线三 外部监督与群体智能</h2><p>这条路线把闭环放到 Agent 宿主之外，或让多个用户、设备、会话和 Agent 实例共享经验。它可以继续演化记忆或技能，区别在于证据的汇聚、更新和分发不再只局限于一个工作区。</p>
+<p><img src="/../../../img/blog/self-evolution/08-collective-loop.png" srcset="/img/loading.gif" lazyload alt="外部监督与群体智能的证据和资产回流"></p>
+<p>图9 不同实例汇聚证据，经质量控制形成共享资产，再按范围回流。图示为通用组合方案，不表示所有项目默认开启全部验证步骤。</p>
+<h3 id="三个代表项目"><a href="#三个代表项目" class="headerlink" title="三个代表项目"></a>三个代表项目</h3><p>Ultron 围绕 Memory Hub、Skill Hub 与 Harness Hub 组织共享知识：记忆供检索，技能表达流程，配置蓝图用于复用完整 Agent 设置。其官方说明同时包含轨迹采集、记忆提炼及技能演化能力。<a target="_blank" rel="noopener" href="https://github.com/modelscope/ultron">11</a></p>
+<p>OpenSpace 以技能管理和演化为主线，保留 FIX、DERIVED 与 CAPTURED 三类更新。当前 v2 文档强调依据具体执行证据判断技能质量，保留验证和版本历史，并通过技能包共享；这比单纯自动改写说明更接近一个外部质量控制层。<a target="_blank" rel="noopener" href="https://github.com/HKUDS/OpenSpace">12</a></p>
+<p>SkillClaw 使用本地 Client Proxy 记录会话和管理技能库，可选 Evolve Server 从共享存储读取证据、演化技能并写回。多个客户端可以连接同一存储，让团队共享同一条回路。额外验证 worker 在官方说明中属于可选配置，不应误认为所有部署都默认具备独立验证。<a target="_blank" rel="noopener" href="https://github.com/AMAP-ML/SkillClaw">13</a></p>
+<h3 id="与前两条路线怎样衔接"><a href="#与前两条路线怎样衔接" class="headerlink" title="与前两条路线怎样衔接"></a>与前两条路线怎样衔接</h3><p>记忆和技能先在本地形成候选，确定哪些证据允许共享，再上传到共享层。共享层执行去重、范围检查与候选验证，给有效版本保留来源；其他 Agent 按任务需要召回记忆或加载技能，并继续回传新的成功、失败和反例。</p>
+<p>工程建议：个人偏好保留用户范围，项目路径保留项目范围，通用操作方法才逐步扩大共享范围。跨环境复用前核对依赖和参数，不把本地成功直接等同于团队通用。</p>
+<h3 id="什么时候需要它"><a href="#什么时候需要它" class="headerlink" title="什么时候需要它"></a>什么时候需要它</h3><p>当多个实例反复解决同类问题，或者同一套有效技能需要跨设备维护时，共享层能扩大经验复用。需要重点处理来源归属、权限、敏感内容、版本冲突和传播范围。多 Agent 分工本身只说明任务协作；如果经验没有被保存、验证并回流，还不能据此称为群体自进化。</p>
+<h2 id="10-路线四-参数代码与工作流自修改"><a href="#10-路线四-参数代码与工作流自修改" class="headerlink" title="10 路线四 参数代码与工作流自修改"></a>10 路线四 参数代码与工作流自修改</h2><p>这条路线把反馈用于改变模型参数、Agent 代码或工作流结构。上下文与技能主要改变模型收到的信息或操作指引；参数训练改变模型内部的行为倾向，代码与工作流更新则改变系统如何组织执行。</p>
+<p><img src="/../../../img/blog/self-evolution/09-policy-loop.png" srcset="/img/loading.gif" lazyload alt="参数代码与工作流的策略更新闭环"></p>
+<p>图10 上方形成优化信号，下方生成与评测策略候选。图示为通用框架；原文两个代表项目主要展示参数训练，不表示二者都自动改写 Agent 代码和工作流。<a target="_blank" rel="noopener" href="https://github.com/microsoft/agent-lightning">14</a></p>
+<h3 id="需要区分的更新对象"><a href="#需要区分的更新对象" class="headerlink" title="需要区分的更新对象"></a>需要区分的更新对象</h3><table>
+<thead>
+<tr>
+<th>更新对象</th>
+<th>常见做法</th>
+<th>可检查的产物</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>模型参数</td>
+<td>强化学习、监督训练或蒸馏</td>
+<td>参数检查点、训练配置、独立评测结果</td>
+</tr>
+<tr>
+<td>Agent 代码</td>
+<td>生成代码变体，在隔离环境中测试</td>
+<td>代码差异、测试结果、版本与回滚记录</td>
+</tr>
+<tr>
+<td>工作流结构</td>
+<td>搜索步骤顺序、角色分工或工具选择策略</td>
+<td>工作流配置、候选比较、任务回归结果</td>
+</tr>
+</tbody></table>
+<h3 id="原文中的两个代表项目"><a href="#原文中的两个代表项目" class="headerlink" title="原文中的两个代表项目"></a>原文中的两个代表项目</h3><p>OpenClaw-RL 把真实交互整理成训练轨迹，异步运行服务、轨迹采集、PRM 或 Judge 评分及策略训练。它支持强化学习及基于后续反馈的蒸馏方法；主线是把交互反馈转为参数优化信号。<a target="_blank" rel="noopener" href="https://github.com/Gen-Verse/OpenClaw-RL">14</a></p>
+<p>Agent Lightning 将实际 Agent 执行与训练链路连接起来。当前官方 v1.0 已重构为 Trainer、API Gateway 与 Rollout Controller 三个主要组件：网关采集模型交互，控制器组织 Agent 运行，训练器形成样本并更新策略。<a target="_blank" rel="noopener" href="https://microsoft.github.io/agent-lightning/stable/">15</a></p>
+<p>版本说明：原文章描述的 LightningStore、Tracer 与可插拔算法结构，对应较早的 Agent Lightning 形态。阅读或实现时应区分旧版与 v1.0，避免混用接口和架构名词。</p>
+<h3 id="什么时候考虑它"><a href="#什么时候考虑它" class="headerlink" title="什么时候考虑它"></a>什么时候考虑它</h3><p>当有大量可重复任务、明确结果标准、可训练模型或可搜索的执行结构，并且前两条路线仍无法解决稳定的行为问题时，可以评估这条路线。它需要更可靠的反馈归因、隔离执行、独立测试和有效版本管理。</p>
+<p>工程建议：参数训练关注奖励偏差与泛化；代码和工作流搜索关注候选的可执行性与副作用。评测提高只说明在相应任务和条件下的收益，不能直接推断总体能力持续上升。</p>
+<h2 id="11-如何证明闭环产生收益"><a href="#11-如何证明闭环产生收益" class="headerlink" title="11 如何证明闭环产生收益"></a>11 如何证明闭环产生收益</h2><p>工程建议：把经验采集、候选生成、验证和发布分开。评估要分别观察任务结果、经验使用过程和运行成本，避免用记忆条数、技能数量或文档评分替代实际收益。</p>
+<p><img src="/../../../img/blog/self-evolution/10-evaluation-loop.png" srcset="/img/loading.gif" lazyload alt="开发验证最终测试与真实任务分工"></p>
+<p>图11 开发用于生成候选，验证用于选择候选，独立最终测试用于报告泛化。后续真实任务产生新证据，但最终测试结果不回流到本轮调参。工程参考示意。</p>
+<table>
+<thead>
+<tr>
+<th>评估对象</th>
+<th>建议观察指标</th>
+<th>需要留意的问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>任务结果</td>
+<td>完成率 验证通过率 结果正确性</td>
+<td>任务难度变化 是否只提高熟悉题</td>
+</tr>
+<tr>
+<td>任务续接</td>
+<td>状态恢复正确率 重复工作量</td>
+<td>摘要遗漏 已完成与待完成混淆</td>
+</tr>
+<tr>
+<td>记忆使用</td>
+<td>相关召回 错误记忆使用 重复犯错</td>
+<td>有召回却未使用 过时事实误用</td>
+</tr>
+<tr>
+<td>技能使用</td>
+<td>适用场景命中 新任务表现 回归失败</td>
+<td>正常任务被误触发 技能互相冲突</td>
+</tr>
+<tr>
+<td>运行成本</td>
+<td>耗时 模型调用量 工具调用量</td>
+<td>收益是否抵消整理 检索和评测成本</td>
+</tr>
+</tbody></table>
+<h3 id="保持比较条件一致"><a href="#保持比较条件一致" class="headerlink" title="保持比较条件一致"></a>保持比较条件一致</h3><p>固定模型、工具权限、任务输入与执行环境，比较无经验、有相关记忆、有技能，以及记忆和技能同时使用的配置。尽量复用同一任务集；对随机性明显的任务重复运行，并报告样本量、波动与失败类型。</p>
+<h3 id="区分三类数据"><a href="#区分三类数据" class="headerlink" title="区分三类数据"></a>区分三类数据</h3><p>开发任务用于发现问题和生成候选；验证任务用于选择候选；最终测试任务用于检查泛化。反复使用验证集也可能过拟合，因此最终测试集应独立，不能用于继续修补被评估的版本。</p>
+<h3 id="覆盖正常与异常场景"><a href="#覆盖正常与异常场景" class="headerlink" title="覆盖正常与异常场景"></a>覆盖正常与异常场景</h3><p>测试集应包含相似失败、不同原因但症状相近的失败、正常任务、过时记忆和无关任务。只测试技能最擅长的失败类型，会遗漏误触发和副作用。</p>
+<h3 id="保留证据而非只看自评"><a href="#保留证据而非只看自评" class="headerlink" title="保留证据而非只看自评"></a>保留证据而非只看自评</h3><p>优先使用可执行测试、可检查产出和明确结果标准。需要模型评审时，将修改与评审分开，使用明确规则，并保留原始结果供复查。不同评委仍可能有共同偏差，不能把独立评审当作绝对可靠。</p>
+<p>发布规则可以要求目标任务有可重复收益，关键回归无退化，且额外成本可接受。具体阈值由任务决定，本文不提供脱离场景的通用分数线。</p>
+<h2 id="12-从最小实现逐步扩展"><a href="#12-从最小实现逐步扩展" class="headerlink" title="12 从最小实现逐步扩展"></a>12 从最小实现逐步扩展</h2><p>工程建议：先实现一种任务的完整闭环。读写接口和版本机制保持简单，确认每个环节有用后再加入语义检索、后台整理和自动候选搜索。</p>
+<h3 id="阶段一-让任务能够继续"><a href="#阶段一-让任务能够继续" class="headerlink" title="阶段一 让任务能够继续"></a>阶段一 让任务能够继续</h3><p>保存轨迹和项目状态，在新任务开始时读取进度。完成标准是能从真实产出恢复已完成事项和下一步，并避免重复执行已完成的工作。</p>
+<h3 id="阶段二-让已验证经验可复用"><a href="#阶段二-让已验证经验可复用" class="headerlink" title="阶段二 让已验证经验可复用"></a>阶段二 让已验证经验可复用</h3><p>增加结构化经验表，支持作用范围、来源、验证状态和修改记录；先用关键词检索。完成标准是相似问题能够召回相关证据，同时能纠正旧结论并拒绝无关经验。</p>
+<h3 id="阶段三-让方法成为技能"><a href="#阶段三-让方法成为技能" class="headerlink" title="阶段三 让方法成为技能"></a>阶段三 让方法成为技能</h3><p>从可验证的经验中提炼技能候选，补齐适用条件和验证标准。建立技能版本与小型任务集。完成标准是候选能被加载、执行，并在未参与提炼的任务上体现收益。</p>
+<h3 id="阶段四-让更新可持续"><a href="#阶段四-让更新可持续" class="headerlink" title="阶段四 让更新可持续"></a>阶段四 让更新可持续</h3><p>增加任务后整理、候选生成、独立验证和有效版本切换。遇到归因不清或测试结果不稳定时保留候选；失败时回滚有效版本。根据任务量再决定是否需要多用户共享和更多基础设施。</p>
+<table>
+<thead>
+<tr>
+<th>常见问题</th>
+<th>对应设计</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>全量历史挤占上下文</td>
+<td>精简常驻事实 按需检索 为当前任务留预算</td>
+</tr>
+<tr>
+<td>把猜测写成长期事实</td>
+<td>记录证据和验证状态 未确认内容保持候选</td>
+</tr>
+<tr>
+<td>局部经验被通用化</td>
+<td>显式保存项目 环境 适用条件与反例</td>
+</tr>
+<tr>
+<td>外部文本污染后续指令</td>
+<td>来源内容作为证据加载 遵守宿主权限与指令边界</td>
+</tr>
+<tr>
+<td>多任务写入互相覆盖</td>
+<td>事务 版本校验或单写入者策略</td>
+</tr>
+<tr>
+<td>技能越改越长</td>
+<td>删除重复步骤 把细节放入按需资源 验证真实收益</td>
+</tr>
+</tbody></table>
+<p>关键实现边界：记忆保存事实与证据，项目状态保存进度，技能保存可复用方法，轨迹保存具体执行。保持这些边界，便于定位错误究竟来自召回、归因、流程还是执行。</p>
+<p>自动化程度可以逐步增加，但每次更新都应留下可审查差异和验证结果。没有足够证据时，保存候选往往比立刻改写有效资产更有价值。</p>
+<h3 id="从本地闭环扩展到其他路线"><a href="#从本地闭环扩展到其他路线" class="headerlink" title="从本地闭环扩展到其他路线"></a>从本地闭环扩展到其他路线</h3><p>完成上下文与技能闭环后，先检查是否真的需要跨设备或团队复用。存在重复试错和技能分发需求时增加共享层，并复用已有的来源、验证和版本机制。共享层的引入不要求同时训练模型。</p>
+<p>只有当任务规模、结果反馈和资源条件支持时，再评估参数训练或代码、工作流搜索。先做小范围对照实验，记录额外成本与泛化结果，确认收益后扩大范围。四条路线按实际问题组合，而不按名称机械升级。</p>
+<table>
+<thead>
+<tr>
+<th>观察到的问题</th>
+<th>优先检查的路线</th>
+<th>先做的事</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>经常忘记进度、约束或已排除的原因</td>
+<td>上下文闭环</td>
+<td>分开保存状态和经验，验证检索与续接</td>
+</tr>
+<tr>
+<td>同类任务反复重新设计操作步骤</td>
+<td>技能资产化</td>
+<td>提炼有边界的流程，建立真实任务回归</td>
+</tr>
+<tr>
+<td>多实例重复踩坑、技能版本各自维护</td>
+<td>外部监督或群体智能</td>
+<td>建立可追溯的共享、验证与分发机制</td>
+</tr>
+<tr>
+<td>有大量反馈但行为问题长期稳定存在</td>
+<td>参数、代码或工作流更新</td>
+<td>明确更新对象，先做独立评测与成本对照</td>
+</tr>
+</tbody></table>
+<h2 id="13-来源与延伸阅读"><a href="#13-来源与延伸阅读" class="headerlink" title="13 来源与延伸阅读"></a>13 来源与延伸阅读</h2><p>来源查阅日期为2026年10月7日。项目说明可能继续更新；本文描述机制，不据此给项目作性能排名。正文中的工程建议和假设案例用于设计参考，效果需在实际任务中验证。</p>
+<ol>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/datawhalechina/hello-agents/blob/main/Extra-Chapter/Extra10-Agent%E8%87%AA%E8%BF%9B%E5%8C%96.md">Datawhale Agent 自进化的四类闭环</a>：本文的分类起点及项目线索。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://hermes-agent.nousresearch.com/docs/user-guide/features/memory">Hermes Persistent Memory</a>：事实记忆 用户偏好 会话快照及历史检索机制。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/NousResearch/hermes-agent">Hermes Agent 官方仓库</a>：记忆 会话检索及技能学习的组合。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/agent0ai/agent-zero">Agent Zero 官方仓库</a>：项目隔离 持续工作环境及可检查资源。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/alchaincyf/darwin-skill">Darwin Skill 官方仓库</a>：技能评估 独立审查 保留或回滚及人工确认。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/openJiuwen-ai/jiuwenswarm/blob/develop/docs/en/SkillSelfEvolution.md">JiuwenSwarm Skill Self Evolution</a>：原 JiuwenClaw 链接的当前去向及经验保存加载流程。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/sentient-agi/EvoSkill">EvoSkill 官方仓库</a>：失败分析 候选生成 留出验证及版本管理。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a>：技能目录 元数据及渐进加载规范。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2303.11366">Reflexion 论文</a>：通过反馈生成反思文本并影响后续尝试。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2310.08560">MemGPT 论文</a>：有限上下文与分层记忆的信息调度。</p>
+</li>
+</ol>
+<p>建议先阅读原章节建立全局视角，再阅读 Hermes 记忆文档与 Agent Skills 规范理解接口。需要技能优化时，按已有技能优化、在线经验积累或基准搜索的目标，分别阅读 Darwin、Jiuwen 与 EvoSkill。</p>
+<ol start="11">
+<li><p><a target="_blank" rel="noopener" href="https://github.com/modelscope/ultron">Ultron 官方仓库</a>：共享记忆、技能和配置蓝图及其演化机制。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/HKUDS/OpenSpace">OpenSpace 官方仓库</a>：技能管理、证据驱动演化、共享与版本管理。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/AMAP-ML/SkillClaw">SkillClaw 官方仓库</a>：本地代理、可选演化服务、共享存储与可选验证。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/Gen-Verse/OpenClaw-RL">OpenClaw-RL 官方仓库</a>：交互反馈、异步采集评分及参数训练。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/microsoft/agent-lightning">Agent Lightning 官方仓库</a>：当前 v1.0 架构及旧版本说明。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://microsoft.github.io/agent-lightning/stable/">Agent Lightning v1.0 文档</a>：实际 Agent 执行与训练链路的组织方式。</p>
+</li>
+</ol>
+<p>图片说明：图1直接采用 Datawhale hello-agents 原文总览图，来源见图注；其余流程图依据原文章、官方项目说明及工程分析重新绘制。图注区分概念归纳与工程参考方案。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Ai/" class="category-chain-item">Ai</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E8%AE%B0%E5%BF%86%E7%AE%A1%E7%90%86/" class="print-no-link">#记忆管理</a>
+      
+        <a href="/tags/%E8%87%AA%E8%BF%9B%E5%8C%96/" class="print-no-link">#自进化</a>
+      
+        <a href="/tags/%E6%8A%80%E8%83%BD%E8%B5%84%E4%BA%A7%E5%8C%96/" class="print-no-link">#技能资产化</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>自进化</div>
+      <div>https://kyy-logs.github.io/2026/10/07/ai/Agent-Self-Evolution/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Yangyang Kong</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年10月7日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/10/05/ai/Agent-Context-Management/" title="上下文工程">
+                        <span class="hidden-mobile">上下文工程</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"kyy-logs/review-repository","repo-id":"R_kgDOR9LLEQ","category":"General","category-id":"DIC_kwDOR9LLEc4C6Yb2","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
