@@ -82,9 +82,9 @@
       
       <tag>Agent</tag>
       
-      <tag>自进化</tag>
-      
       <tag>记忆管理</tag>
+      
+      <tag>自进化</tag>
       
       <tag>技能资产化</tag>
       
@@ -113,11 +113,11 @@
       
       <tag>Agent</tag>
       
-      <tag>记忆管理</tag>
-      
       <tag>上下文工程</tag>
       
       <tag>Context-Engineering</tag>
+      
+      <tag>记忆管理</tag>
       
       <tag>KV-Cache</tag>
       
@@ -169,11 +169,11 @@
     
     <tags>
       
-      <tag>Agent</tag>
-      
       <tag>AI-native</tag>
       
       <tag>工作流</tag>
+      
+      <tag>Agent</tag>
       
       <tag>工程实践</tag>
       
