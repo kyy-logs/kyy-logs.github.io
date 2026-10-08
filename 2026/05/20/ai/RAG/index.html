@@ -1,0 +1,1608 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/cat.ico">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Yangyang Kong">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本篇由「面试遇到的问题」拆解合并而来，保留原文与图片。原与 Agent、Harness 等同篇，现拆为独立文章。下文各 ## 为原面试小节标题。 RAGRAG和传统搜索有什么区别？工作流程 (Workflow)  传统搜索 (如 Google, Elasticsearch):  关键词匹配： 你输入“RAG 和传统搜索的区别”，它会用倒排索引等技术，找出包含这些关键词的文档。 排序： 使用 Pag">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RAG">
+<meta property="og:url" content="https://kyy-logs.github.io/2026/05/20/ai/RAG/index.html">
+<meta property="og:site_name" content="多云的小站">
+<meta property="og:description" content="本篇由「面试遇到的问题」拆解合并而来，保留原文与图片。原与 Agent、Harness 等同篇，现拆为独立文章。下文各 ## 为原面试小节标题。 RAGRAG和传统搜索有什么区别？工作流程 (Workflow)  传统搜索 (如 Google, Elasticsearch):  关键词匹配： 你输入“RAG 和传统搜索的区别”，它会用倒排索引等技术，找出包含这些关键词的文档。 排序： 使用 Pag">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-20T02:05:00.000Z">
+<meta property="article:modified_time" content="2026-10-08T11:13:14.337Z">
+<meta property="article:author" content="Yangyang Kong">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="检索增强">
+<meta property="article:tag" content="面试">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>RAG - 多云的小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyy-logs.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":null,"loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"left","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>多云的小站</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-code-fill"></i>
+                <span>语言</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/language/java/" target="_self">
+                    <i class="iconfont icon-tags-fill"></i>
+                    <span>Java</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/language/spring/" target="_self">
+                    <i class="iconfont icon-tags-fill"></i>
+                    <span>Spring</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-database-fill"></i>
+                <span>数据库</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/database/mysql/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>MySQL</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/database/redis/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>Redis</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/mq/" target="_self">
+                <i class="iconfont icon-interactive-fill"></i>
+                <span>消息队列</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                
+                <span>计算机基础</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>计算机网络</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" target="_self">
+                    <i class="iconfont icon-category-fill"></i>
+                    <span>操作系统</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/ai/" target="_self">
+                
+                <span>Ai</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/algorithm/" target="_self">
+                <i class="iconfont icon-launch-fill"></i>
+                <span>算法</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/scenario/" target="_self">
+                <i class="iconfont icon-project-fill"></i>
+                <span>场景题</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/opensource/" target="_self">
+                <i class="iconfont icon-github-fill"></i>
+                <span>开源项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="RAG"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-05-20 10:05" pubdate>
+          2026年5月20日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          15k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          129 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="padding-left: 2rem; margin-right: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">RAG</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本篇由「面试遇到的问题」拆解合并而来，保留原文与图片。原与 Agent、Harness 等同篇，现拆为独立文章。下文各 <code>##</code> 为原面试小节标题。</p>
+<h1 id="RAG"><a href="#RAG" class="headerlink" title="RAG"></a>RAG</h1><h2 id="RAG和传统搜索有什么区别？"><a href="#RAG和传统搜索有什么区别？" class="headerlink" title="RAG和传统搜索有什么区别？"></a>RAG和传统搜索有什么区别？</h2><p><strong>工作流程 (Workflow)</strong></p>
+<ul>
+<li><p><strong>传统搜索 (如 Google, Elasticsearch):</strong></p>
+<ol>
+<li><strong>关键词匹配：</strong> 你输入“RAG 和传统搜索的区别”，它会用倒排索引等技术，找出包含这些关键词的文档。</li>
+<li><strong>排序：</strong> 使用 PageRank、BM25 等算法，对找到的文档进行相关性排序。</li>
+<li><strong>返回列表：</strong> 将排序后的文档链接列表直接呈现给你。</li>
+</ol>
+<ul>
+<li><strong>核心：</strong> <strong>信息检索 (Information Retrieval)</strong>。</li>
+</ul>
+</li>
+<li><p><strong>RAG (检索增强生成):</strong></p>
+<ol>
+<li><strong>【检索阶段 - Retrieval】(类似传统搜索，但目标不同):</strong><ul>
+<li>你输入同样的问题。系统先将你的问题<strong>向量化</strong>。</li>
+<li>去<strong>向量数据库</strong>中，寻找与你问题向量最<strong>相似</strong>的文本块（Chunks）。这一步的目标不是给你看，而是找“原材料”。</li>
+</ul>
+</li>
+<li><strong>【增强阶段 - Augmentation】:</strong><ul>
+<li>系统将你<strong>原始的问题</strong>和<strong>检索到的原材料文本</strong>，通过一个 Prompt 模板，<strong>拼接</strong>成一个新的、更丰富的 Prompt。</li>
+<li><em>示例 Prompt: “你是一个专家，请根据以下背景知识：[‘检索到的文本块1’, ‘文本块2’]，来回答这个问题：’RAG 和传统搜索的区别是什么？’”</em></li>
+</ul>
+</li>
+<li><strong>【生成阶段 - Generation】:</strong><ul>
+<li>将这个增强后的 Prompt 发送给<strong>大语言模型（大模型）</strong>。</li>
+<li>大模型<strong>阅读并理解</strong>你提供的背景知识，然后用自己的语言组织并生成一个<strong>直接、连贯的答案</strong>。</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li><strong>核心：</strong> <strong>检索 + 理解 + 生成 (Retrieval + Comprehension + Generation)</strong>。</li>
+</ul>
+</li>
+<li><p><strong>传统搜索：</strong></p>
+<ul>
+<li><strong>优势：</strong> 速度极快，信息保真度高（因为是原文），适合需要广泛浏览和自主研究的场景。</li>
+<li><strong>场景：</strong> 查找特定文档、网页、商品。</li>
+</ul>
+</li>
+<li><p><strong>RAG：</strong></p>
+<ul>
+<li><strong>优势：</strong><ul>
+<li><strong>减少幻觉：</strong> 大模型的回答被限制在提供的“原材料”范围内，不会凭空捏造。</li>
+<li><strong>知识更新：</strong> 可以通过更新向量数据库，让大模型掌握最新的、私有的知识，而无需重新训练模型。</li>
+<li><strong>提供溯源：</strong> 可以展示答案是根据哪些原始文本块生成的，增加了可信度。</li>
+</ul>
+</li>
+<li><strong>场景：</strong> 企业内部知识库问答、智能客服、财报分析、代码解释等需要基于特定知识进行问答的场景。</li>
+</ul>
+</li>
+</ul>
+<p>“关键词召回依靠倒排索引，适合编号、专有名词等需要<strong>绝对精准匹配</strong>的场景，它的下限很高且可解释性强；而语义召回依靠向量距离，适合口语化长句、需要<strong>同义推断和意图理解</strong>的场景，能极大地缓解词汇鸿沟问题。</p>
+<p>在我设计架构时，绝不会二选一，而是采用<strong>混合召回（Hybrid Search）</strong>。通过倒排索引保证精准度的底线，通过向量检索提升长尾 Query 的召回率，最后辅以 RRF 或 Reranker 模型进行融合排序，这样才能应对真实的复杂业务需求。”</p>
+<h2 id="openclaw的记忆机制-检索？（OpenClaw-核心概念深度解析）（OpenClaw三级记忆系统实现揭秘：向量数据库-关系型数据库的混合存储方案-云社区-华为云）（AI-Agent-记忆系统实战：OpenClaw-Memory-最佳实践AI-Agent-记忆系统实战：OpenClaw-掘金）"><a href="#openclaw的记忆机制-检索？（OpenClaw-核心概念深度解析）（OpenClaw三级记忆系统实现揭秘：向量数据库-关系型数据库的混合存储方案-云社区-华为云）（AI-Agent-记忆系统实战：OpenClaw-Memory-最佳实践AI-Agent-记忆系统实战：OpenClaw-掘金）" class="headerlink" title="openclaw的记忆机制+检索？（OpenClaw 核心概念深度解析）（OpenClaw三级记忆系统实现揭秘：向量数据库+关系型数据库的混合存储方案-云社区-华为云）（AI Agent 记忆系统实战：OpenClaw Memory 最佳实践AI Agent 记忆系统实战：OpenClaw - 掘金）"></a>openclaw的记忆机制+检索？（<a target="_blank" rel="noopener" href="https://openclaw.deeptoai.com/zh-CN/docs/openclaw-core-concepts#memory-%E8%AE%B0%E5%BF%86%E7%B3%BB%E7%BB%9F">OpenClaw 核心概念深度解析</a>）（<a target="_blank" rel="noopener" href="https://bbs.huaweicloud.com/blogs/475004">OpenClaw三级记忆系统实现揭秘：向量数据库+关系型数据库的混合存储方案-云社区-华为云</a>）（<a target="_blank" rel="noopener" href="https://juejin.cn/post/7608782906941292584#heading-12">AI Agent 记忆系统实战：OpenClaw Memory 最佳实践AI Agent 记忆系统实战：OpenClaw - 掘金</a>）</h2><h2 id="项目中的上下文工程如何做的？这个从哪些角度回答呢-agent角色-动态RAG-TOOLS-记忆-运行上下文"><a href="#项目中的上下文工程如何做的？这个从哪些角度回答呢-agent角色-动态RAG-TOOLS-记忆-运行上下文" class="headerlink" title="项目中的上下文工程如何做的？这个从哪些角度回答呢(agent角色+动态RAG+TOOLS+记忆+运行上下文)"></a>项目中的上下文工程如何做的？这个从哪些角度回答呢(agent角色+动态RAG+TOOLS+记忆+运行上下文)</h2><p><strong>角度一：静态上下文（Static Context）—— 定义 Agent 的“灵魂”和“边界”</strong></p>
+<p>这是 Agent 的“出厂设置”，相对固定，决定了它的身份、能力和行为准则。</p>
+<ul>
+<li><strong>1. Agent Persona &amp; Role（角色与人设）</strong>：<ul>
+<li>在我的 SOP 架构中，每个 Agent（分析、执行、监督、总结）都有自己独立的、精心设计的 System Prompt。比如“监督 Agent”的人设就是“一个追求极致代码质量的高级架构师”，这能极大提升它的批判性思维。</li>
+</ul>
+</li>
+<li><strong>2. Global Instructions &amp; Guardrails（全局指令与护栏）</strong>：<ul>
+<li>这里定义了整个任务的最终目标、输出格式的强制要求（如必须返回 JSON）、以及<strong>安全护栏</strong>（如“严禁透露个人隐私”、“严禁执行删除数据库等高危操作”）。这是保证 Agent 不“越狱”的第一道防线。</li>
+</ul>
+</li>
+</ul>
+<p><strong>角度二：动态上下文（Dynamic Context）—— 为 Agent 注入“实时知识”和“世界交互能力”</strong></p>
+<p>这是上下文工程的重中之重，它让 Agent 从一个“离线书呆子”变成一个能连接真实世界的“实干家”。这部分信息是<strong>按需检索、动态注入</strong>的。</p>
+<ul>
+<li><strong>1. 外部知识（RAG - 检索增强生成）</strong>：<ul>
+<li>当 Agent 需要回答其训练数据中没有的<strong>私有领域知识</strong>时，系统会先根据用户问题，去<strong>向量数据库</strong>中检索最相关的知识片段（Chunks），然后将这些片段作为上下文注入。</li>
+<li><strong>工程细节（体现深度）</strong>：我们不只是简单检索。在工程上，我们做了**元数据过滤（Metadata Filtering）**来保证多租户数据隔离；还做了**重排序（Re-ranking）**，确保最关键的知识片段放在上下文的最前面，避免 LLM 的“中间遗忘（Lost in the middle）”问题。</li>
+</ul>
+</li>
+<li><strong>2. 外部能力（Tools&#x2F;MCPs）</strong>：<ul>
+<li>这是解决 <strong>Tools 过多</strong> 问题的关键。我不会把上百个工具的 Schema 全都塞进去。在我的架构中，采用了<strong>基于 RAG 的工具动态检索（Tool Retrieval）</strong>。系统会先把用户的意图去一个专门的“工具向量库”里检索，只找出最相关的 3-5 个工具的定义，动态地注入到上下文中。</li>
+</ul>
+</li>
+</ul>
+<p><strong>角度三：会话上下文（Conversational Context）—— 赋予 Agent “记忆”</strong></p>
+<p>这部分解决了大模型无状态的问题，让 Agent 能够理解多轮对话的来龙去脉。</p>
+<ul>
+<li><strong>1. 短期记忆（Short-term Memory）</strong>：<ul>
+<li>我们使用 Redis 存储每个 Session_ID 下的对话历史。但为了防止 Token 溢出，我们采用了**滑动窗口 + 摘要（Sliding Window with Summarization）**的策略。系统只保留最近 K 轮的完整对话，更早的对话会被另一个 LLM 调用（或本地模型）<strong>自动总结成一段摘要</strong>，极大压缩了 Token 占用。</li>
+</ul>
+</li>
+<li><strong>2. 长期记忆（Long-term Memory）</strong>：<ul>
+<li>在每次 SOP 流程结束后，“总结 Agent”会提取本次交互中关于用户的关键信息（如偏好、身份），将其向量化并存入一个专门的**“用户画像向量库”**。下次用户再来时，系统会优先检索这份长期记忆，让 Agent 表现得更懂用户。</li>
+</ul>
+</li>
+</ul>
+<h2 id="RAG如何进行数据预处理，LLM最终看到的块是什么格式的"><a href="#RAG如何进行数据预处理，LLM最终看到的块是什么格式的" class="headerlink" title="RAG如何进行数据预处理，LLM最终看到的块是什么格式的"></a>RAG如何进行数据预处理，LLM最终看到的块是什么格式的</h2><p><strong>一、 RAG 数据预处理的 4 步标准流程</strong></p>
+<p>无论你的源数据是 PDF、Word、HTML 还是数据库，预处理通常遵循以下严格的四个步骤：</p>
+<p><strong>1. 数据解析与清洗（Parsing &amp; Cleaning）</strong></p>
+<p>这是最脏最累的活。</p>
+<ul>
+<li><strong>提取内容</strong>：把非结构化数据（如 PDF 里的表格、图片、双栏排版文字）提取为纯文本。<ul>
+<li><em>进阶做法</em>：对于复杂的 PDF，工业界通常使用 OCR（如 PaddleOCR）配合版面分析（Layout Analysis）模型，识别出标题、正文、页眉、页脚。</li>
+</ul>
+</li>
+<li><strong>清洗去噪</strong>：剔除毫无意义的信息。<ul>
+<li>删除多余的换行符、空格。</li>
+<li>删除页眉、页脚、版权声明（这些东西如果被检索出来喂给 LLM，纯属浪费 Token）。</li>
+<li>修复乱码或特殊符号。</li>
+</ul>
+</li>
+</ul>
+<p><strong>2. 文档分块（Chunking &#x2F; Splitting）—— 核心技术点</strong></p>
+<p>把清洗后的大长文，切成一段一段的文本块（Chunk），以便存入向量数据库并被精准检索。<strong>切法决定了 RAG 的生死</strong>。</p>
+<ul>
+<li><strong>固定长度切分（按字数&#x2F;Token数）</strong>：比如每 500 个 Token 切一刀。<ul>
+<li><em>缺点</em>：很容易把一句完整的话、或者一个完整的上下文语义从中间劈开，导致检索出来的 Chunk 词不达意。</li>
+</ul>
+</li>
+<li><strong>基于规则的切分（如 LangChain 的 RecursiveCharacterTextSplitter）</strong>：<ul>
+<li>先尝试按段落（\n\n）切，如果段落还是太长，再按句子（。 或 .）切，最后再按字数切。这种方法尽量保证了句子的完整性。</li>
+</ul>
+</li>
+<li><strong>基于语义的切分（Semantic Chunking）—— 进阶高级玩法</strong>：<ul>
+<li>通过自然语言处理模型，识别出文本中“主题发生切换”的位置，在主题切换处切分。确保每个 Chunk 讲的是同一个核心意思。</li>
+</ul>
+</li>
+<li><strong>重叠（Overlap）</strong>：无论怎么切，<strong>相邻的两个 Chunk 之间必须有一段重叠（比如重叠 100 个 Token）</strong>。这样能防止关键信息正好被切断在两个块的边界处。</li>
+</ul>
+<p><strong>3. 向量化（Embedding）</strong></p>
+<p>将切好的文本块（Chunk）输入给 Embedding 模型（如 OpenAI 的 text-embedding-3-small 或开源的 bge-m3），将人类能看懂的文字转换成机器能理解的<strong>多维浮点数数组（向量）</strong>。</p>
+<p><strong>4. 元数据注入（Metadata Enrichment）—— 极其重要！</strong></p>
+<p>这是区分“玩具 RAG”和“企业级 RAG”的分水岭。<br>在把 Chunk 和它的向量存入向量数据库（如 Milvus、Qdrant）时，<strong>绝对不能只存一段干瘪的文本</strong>，必须附带丰富的元数据（字典&#x2F;JSON）。</p>
+<ul>
+<li>比如：{“doc_id”: “123”, “title”: “2024年员工手册”, “author”: “HR部”, “timestamp”: “2024-01-01”, “chunk_index”: 5, “access_level”: “public”}</li>
+<li><em>用途</em>：未来在检索时，可以先通过这些元数据进行<strong>硬过滤（Metadata Filtering）</strong>，比如“只检索 HR 部在 2024 年发的公开文档”，然后再进行向量相似度计算，极大提升准确率。</li>
+</ul>
+<p><strong>二、 LLM 最终看到的块（Chunk）是什么格式的？</strong></p>
+<p>当用户提问后，系统从向量数据库里检索出了最相关的 Top-3 个 Chunks。LLM 最终在 Prompt 里看到的，<strong>并不是冰冷的向量，而是经过精心组装的、带上下文说明的结构化纯文本</strong>。</p>
+<p>通常，我们会把这些检索到的 Chunks 组装成以下这种格式喂给 LLM：</p>
+<p>codeMarkdown</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">系统提示（System</span> <span class="hljs-string">Prompt）:</span><br><span class="hljs-string">你是一个智能客服助手。请严格根据以下提供参考资料（Context）来回答用户的问题。如果资料中没有答案，请明确回答“我不知道”，不要自己编造。</span><br><br><span class="hljs-string">参考资料（Context）:</span><br><span class="hljs-meta">---</span><br>[<span class="hljs-string">资料</span> <span class="hljs-number">1</span>]<br><span class="hljs-string">来源文档：《2024年员工手册》</span><br><span class="hljs-string">相关内容：关于年假规定，入职满一年的全职员工，每年可享受</span> <span class="hljs-number">5</span> <span class="hljs-string">天带薪年假。年假不可跨年结转，必须在当年</span> <span class="hljs-number">12</span> <span class="hljs-string">月</span> <span class="hljs-number">31</span> <span class="hljs-string">日前休完。</span><br><span class="hljs-meta">---</span><br>[<span class="hljs-string">资料</span> <span class="hljs-number">2</span>]<br><span class="hljs-string">来源文档：《HR部门补充通知》</span><br><span class="hljs-string">相关内容：自</span> <span class="hljs-number">2024</span> <span class="hljs-string">年</span> <span class="hljs-number">7</span> <span class="hljs-string">月起，如果是特殊岗位的研发人员，经总监批准，未休完的年假可以折算成三倍工资在年底发放。</span><br><span class="hljs-meta">---</span><br><span class="hljs-meta"></span><br><span class="hljs-string">用户问题（User</span> <span class="hljs-string">Query）:</span><br><span class="hljs-string">我是今年</span> <span class="hljs-number">1</span> <span class="hljs-string">月入职的研发，我今年的年假如果不休完会作废吗？</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>解析：LLM 最终看到的内容包含了什么？</strong></p>
+<ol>
+<li><strong>明确的指令护栏</strong>（严禁编造，必须基于参考资料）。</li>
+<li><strong>来源标识（Metadata 的体现）</strong>：告诉 LLM 这段话是出自哪份文档。这不仅有助于 LLM 理解上下文，还能让 LLM 在回答时给出<strong>引用来源（Citations）</strong>（比如：“根据《2024年员工手册》规定…”）。</li>
+</ol>
+<h2 id="Rerank-后返回几个块（Chunk）？有没有针对这个返回数量做过验证？Rerank-后的-TopK-截断是怎么做的？为什么是这个值？有没有其他截断方案？"><a href="#Rerank-后返回几个块（Chunk）？有没有针对这个返回数量做过验证？Rerank-后的-TopK-截断是怎么做的？为什么是这个值？有没有其他截断方案？" class="headerlink" title="Rerank 后返回几个块（Chunk）？有没有针对这个返回数量做过验证？Rerank 后的 TopK 截断是怎么做的？为什么是这个值？有没有其他截断方案？"></a>Rerank 后返回几个块（Chunk）？有没有针对这个返回数量做过验证？Rerank 后的 TopK 截断是怎么做的？为什么是这个值？有没有其他截断方案？</h2><p>面试官您好，这两个问题都直击了我们 RAG 系统在生产环境中进行性能和准确率优化的核心。我们的做法是<strong>完全基于数据驱动的实验，而不是依赖经验或拍脑袋</strong>来决定这些超参数。”</p>
+<p><strong>关于问题 4：“Rerank 后返回几个块？”</strong></p>
+<p>“在我们搭建的 RAG 系统中，Rerank 后最终送给大模型的 Chunk 数量（Top-K）是一个经过严格实验验证的权衡结果，通常我们设定在 <strong>3 到 5 个</strong>之间。</p>
+<p><strong>我们之所以不选择更多</strong>，是为了规避两个核心风险：</p>
+<ol>
+<li><strong>大模型的‘迷失在中间’（Lost in the Middle）效应：</strong> 学术界和我们自己的实验都证明，当上下文过长时，大模型的注意力会集中在开头和结尾，导致中间的关键信息被忽略，准确率不升反降。</li>
+<li><strong>成本与延迟：</strong> 过多的 Chunk 会显著增加 Token 消耗和 API 响应时间，影响用户体验和运营成本。</li>
+</ol>
+<p><strong>我们也不选择更少</strong>，比如只返回 Top-1，是因为对于复杂问题，答案往往分散在多个文档片段中，只给一个会导致信息不全，无法生成全面、准确的答案。</p>
+<p><strong>这个 3-5 的值是我们通过自动化评测流水线得出的。</strong> 我们构建了一个包含数百个业务问题的‘黄金标准集’，然后通过网格搜索（Grid Search）测试了不同的 Top-K 值，并重点监控了三个自动化评测指标：<strong>Answer Relevance（答案相关性）、Faithfulness（忠实度&#x2F;无幻觉率）和 Context Precision（上下文精确度）</strong>。实验结果显示，当 K 超过 5 时，相关性收益基本见顶，但上下文噪声和幻觉率开始明显上升，因此 3-5 是我们当前业务场景下的最佳平衡点。”</p>
+<p><strong>关于问题 5：“Rerank 后的 TopK 截断是怎么做的？”</strong></p>
+<p>“对于 Rerank 后的结果截断，我们<strong>绝对不使用僵硬的‘固定 Top-K 硬截断’</strong>，因为这在面对知识库中不存在答案的场景时，会强行喂给大模型一堆不相关的垃圾上下文，导致严重的幻觉。</p>
+<p>我们的截断策略是一个**‘动态漏斗组合’**：</p>
+<ol>
+<li><strong>第一层：绝对分数阈值（Absolute Score Threshold）</strong><ul>
+<li>这是我们最核心的防御机制。我们的 Reranker 模型（交叉编码器）能输出 0-1 之间的绝对相关性分数。我们通过离线评测找到了一个最佳的置信度阈值（比如 0.45）。任何 Rerank 分数低于这个阈值的 Chunk，无论排名多高，都会被直接抛弃。</li>
+<li><strong>这个机制的最大好处是：</strong> 如果所有 Chunk 都被抛弃，说明知识库里很可能就没有答案。我们的 Agent 此时会触发安全降级逻辑，直接告诉用户‘找不到相关信息’，<strong>彻底杜绝了基于垃圾上下文的胡编乱造</strong>。</li>
+</ul>
+</li>
+<li><strong>第二层：最大数量上限（Max-K Cap）</strong><ul>
+<li>在通过了分数阈值之后，我们再设定一个最大数量上限（比如 K&#x3D;5），这是为了防止过多高质量 Chunk 导致‘迷失在中间’。</li>
+</ul>
+</li>
+<li><strong>（可选的高级策略）第三层：相对分数跌落（Relative Score Drop）</strong><ul>
+<li>我们还会观察分数列表的梯度。如果出现从 0.9 突然暴跌到 0.2 这样的断崖，我们会智能地在断崖处提前截断，确保送给大模型的上下文都是同一高质量梯队的。</li>
+</ul>
+</li>
+</ol>
+<h2 id="你用的切分策略是什么？你说按段落-按语义切，那段落有的-100-字、有的-1-万字怎么办？"><a href="#你用的切分策略是什么？你说按段落-按语义切，那段落有的-100-字、有的-1-万字怎么办？" class="headerlink" title="你用的切分策略是什么？你说按段落&#x2F;按语义切，那段落有的 100 字、有的 1 万字怎么办？"></a>你用的切分策略是什么？你说按段落&#x2F;按语义切，那段落有的 100 字、有的 1 万字怎么办？</h2><p>你的 chunk size 为什么定 1000 token？这是拍脑袋还是有依据？<br>overlap 设多少？为什么这样设？</p>
+<ol>
+<li><strong>关于切分策略</strong>：我采用的是**‘结构感知 + 递归兜底’的混合策略**。我会优先利用 Markdown 或版面分析模型，按真实的文档章节（如 # 标题）进行切块。只有在结构层级不明显时，才会降级使用按段落、句号切分的语义递归策略。</li>
+<li><strong>面对极端长度的段落</strong>：我会设置一个动态的滑动窗口（比如 Min&#x3D;300, Max&#x3D;800）。<strong>对于 100 字的短段落，我会执行‘向上聚合’</strong>，把它和相邻段落拼接，避免上下文太短导致向量特征模糊（所谓的碎片化噪音）；<strong>对于 1 万字的长段落，我会执行‘向下递归切分’</strong>，逐级按句号、逗号甚至字符强制斩断，确保没有任何一个块超过 Embedding 模型的上限。</li>
+<li><strong>关于 Chunk Size 的设定依据</strong>：我们定在 500 到 800 Token 之间。这并非主观猜测，而是基于三个维度的权衡：第一是适配底层 Embedding 模型（如 BGE-Large）的最佳输入长度；第二是考虑 LLM 的上下文预算（如果召回 Top-5，加起来不能撑爆窗口）；第三，也是最核心的，<strong>我们通过 RAGAS 评估框架跑过真实的 Ground Truth 测试集</strong>，对比了 300、500、1000 三个粒度，发现 500-800 之间的召回命中率（Hit Rate）和 MRR 得分最高。</li>
+<li><strong>关于 Overlap 的设定</strong>：我将其固定在 100 个 Token 左右（约占 15%）。这么做是为了解决**‘共指消解’和‘上下文断裂’**问题。100 个 Token 刚好能覆盖中文 2 到 3 个句子的跨度，足以确保上一段末尾的主语（比如‘张三’）能够平滑地延伸到下一段的开头（比如‘他指出…’），防止 LLM 在生成答案时张冠李戴。</li>
+</ol>
+<h2 id="向量检索和-BM25-的融合比例是怎样的？"><a href="#向量检索和-BM25-的融合比例是怎样的？" class="headerlink" title="向量检索和 BM25 的融合比例是怎样的？"></a>向量检索和 BM25 的融合比例是怎样的？</h2><p>“在我们的混合检索（Hybrid Search）架构中，关于向量检索和 BM25 的融合比例，我没有采用拍脑袋的固定值，而是基于一套**‘场景分类 + 归一化 + 网格搜索评估’**的工程化体系来落地的。</p>
+<p>首先，在底层算法上，我没有直接使用原始分数相加。因为 BM25 的得分是无界的，而向量的余弦相似度是有界的。我先对两者做了<strong>Min-Max 归一化（Normalization）</strong>，然后再引入参数 Alpha 进行线性加权。<em>(注：如果你们用的是 RRF，这里可以说：为了避免分数尺度不一致的问题，我直接采用了基于排名的 RRF 倒数排名融合算法，绕过了绝对分数的权重分配。)</em></p>
+<p>其次，关于具体比例的设定，这是由<strong>业务的数据特征</strong>决定的：<br>对于包含大量专有名词、订单号、错误代码的业务线（比如运维排障），我将 Alpha 调低，把 <strong>BM25 的权重拉到了 0.7 左右</strong>，确保精准匹配不被语义泛化吃掉；<br>而对于泛知识库问答场景，用户提问极其口语化，我将 <strong>向量检索的权重拉高到了 0.8</strong>，用以弥补关键字匹配不到的语义鸿沟。</p>
+<p>最后，这个比例不是一成不变的。我们会构建一个真实的 <strong>Ground Truth 评测数据集（包含 1000 个真实 Query 和标准答案文档）</strong>。然后利用自动化脚本进行<strong>网格搜索（Grid Search）</strong>，让 Alpha 从 0.1 步进到 0.9，跑出每一组权重下的 NDCG@10 和召回命中率（Hit Rate）。<strong>数据指标跑到哪里最高，我们线上的融合比例就设为多少。</strong>”</p>
+<h2 id="大模型幻觉产生的原因？RAG幻觉如何处理？"><a href="#大模型幻觉产生的原因？RAG幻觉如何处理？" class="headerlink" title="大模型幻觉产生的原因？RAG幻觉如何处理？"></a><mark>大模型幻觉产生的原因？RAG幻觉如何处理？</mark></h2><p><strong>大模型幻觉（Hallucination）产生的原因？</strong></p>
+<p><mark>大模型“一本正经地胡说八道”，本质上是因为<strong>大模型是基于概率预测下一个Token的统计模型，而不是确定的知识数据库。</strong></mark></p>
+<ul>
+<li><mark><strong>数据层面</strong>：训练数据中包含过时信息、错误知识、相互矛盾的内容，或者模型根本没见过相关数据。</mark></li>
+<li><strong>原理层面</strong>：模型缺乏真实的逻辑推理能力，它只是在寻找上下文中概率最高的词进行拼接，当上下文不足时，它倾向于“编造”合理的连缀。</li>
+<li><strong>对齐税 (Alignment Tax)</strong>：在 RLHF（强化学习人类反馈）微调阶段，如果过度鼓励模型回答问题（而不是承认不知道），模型就会倾向于生成看似合理但实际错误的答案以取悦人类。</li>
+<li><mark><strong>上下文过长</strong>：在处理超长文本时，模型容易出现“迷失在中间（Lost in the middle）”的现象，忽略或混淆了关键信息。</mark></li>
+</ul>
+<p><strong>一、 检索环节出问题（“找错了” 或 “没找到”）</strong></p>
+<p>这是 RAG 幻觉<strong>最常见</strong>的来源。大模型就像一个极其聪明的考生，但如果开卷考试给的参考资料是错的、碎的、或者无关的（Garbage In），它产出的答案必然是错的（Garbage Out）。</p>
+<p><strong>1. 知识库本身质量差（源头污染）</strong></p>
+<ul>
+<li><strong>原因</strong>：你喂给向量数据库的文档本身就包含过期的、自相矛盾的、或者错误的知识。</li>
+<li><strong>结果</strong>：大模型非常“忠实”地提取了这些错误信息，这在用户看来就是幻觉，但实际上是系统“如实转述”了错误。</li>
+</ul>
+<p><strong>2. 分块（Chunking）策略不当导致语义割裂</strong></p>
+<ul>
+<li><strong>原因</strong>：文档被生硬地按固定字数切分。比如一句话“<strong>不</strong>建议在孕期使用该药物”，被切成了两块：块A是“<strong>不</strong>”，块B是“建议在孕期使用该药物”。</li>
+<li><strong>结果</strong>：如果检索只召回了块B，大模型就会给出完全相反的致命错误答案。缺失上下文是导致事实扭曲的重灾区。</li>
+</ul>
+<p><strong>3. 语义检索的局限性（匹配偏差）</strong></p>
+<ul>
+<li><strong>原因</strong>：Embedding 模型在理解复杂意图、特定缩写或细微逻辑关系时能力不足。比如搜索“苹果公司的负面新闻”，模型可能召回了大量关于“苹果营养价值”或“苹果公司正面财报”的文档，因为它们在向量空间里都很接近。</li>
+<li><strong>结果</strong>：大模型拿着一堆相关但不切题的文档，强行回答问题，从而产生捏造。</li>
+</ul>
+<p><strong>4. 召回噪音过多（Top-K 污染）</strong></p>
+<ul>
+<li><strong>原因</strong>：为了保证能找到答案，系统一次性召回了 Top 10 的文档片段。其中只有 1 段是正确答案，另外 9 段是相似但无关的噪音。</li>
+<li><strong>结果</strong>：这些噪音信息会严重干扰大模型的判断，导致它把不同文档里的概念张冠李戴（例如把A公司的财报数据安到了B公司头上）。</li>
+</ul>
+<p><strong>二、 组装与理解环节出问题（“没看懂” 或 “看漏了”）</strong></p>
+<p>即使找回来的参考资料是正确的，大模型在阅读这些资料时也会出现“认知障碍”。</p>
+<p><strong>5. 迷失在中间（Lost in the Middle）现象</strong></p>
+<ul>
+<li><strong>原因</strong>：这是当前 LLM 的一个普遍缺陷。当给定的上下文（Context）非常长时，大模型通常只对开头和结尾的信息保持较高的注意力，而会<strong>忽略或遗忘中间部分的信息</strong>。</li>
+<li><strong>结果</strong>：如果关键答案恰好位于召回片段的中间位置，大模型可能会视而不见，转而靠自己瞎猜。</li>
+</ul>
+<p><strong>阶段一：事前预防 —— 优化检索质量 (Garbage In, Garbage Out)</strong></p>
+<p>这是<strong>最重要、最根本</strong>的一步。如果送给 LLM 的上下文（Context）本身就是错误的、无关的或不完整的，那么再强的 LLM 也难免会产生幻觉。</p>
+<p><strong>1. 提升分块策略 (Chunking Strategy)</strong></p>
+<p>低质量的文本块是万恶之源。</p>
+<ul>
+<li><strong>问题</strong>：简单的固定大小分块会割裂语义，导致上下文不完整。</li>
+<li><strong>解决方案</strong>：<ul>
+<li><strong>语义分块 (Semantic Chunking)</strong>：使用模型（如Sentence-Transformers）根据语义的完整性来切分文档，保证每个块都是一个相对完整的意义单元。</li>
+<li><strong>内容感知分块</strong>: 针对不同类型的内容（如Markdown表格、代码、段落）使用不同的分块逻辑。</li>
+<li><strong>块重叠 (Chunk Overlap)</strong>：在块与块之间保留一部分重叠内容，确保在边界处的语义连续性。</li>
+</ul>
+</li>
+</ul>
+<p><strong>2. 优化 Embedding 模型</strong></p>
+<ul>
+<li><strong>问题</strong>：通用的 Embedding 模型可能无法很好地理解你所在领域的专业术语。</li>
+<li><strong>解决方案</strong>：<ul>
+<li><strong>使用领域专用模型</strong>: 选择在你的专业领域（如金融、医疗）预训练过的 Embedding 模型。</li>
+<li><strong>微调 (Fine-tuning)</strong>：在你自己的数据集上对 Embedding 模型进行微调，让它更懂你的业务语言。</li>
+</ul>
+</li>
+</ul>
+<p><strong>3. 采用混合检索 (Hybrid Search)</strong></p>
+<ul>
+<li><strong>问题</strong>：单纯的向量检索可能无法精确匹配关键词（如产品型号、人名），导致召回内容语义相关但事实错误。</li>
+<li><strong>解决方案</strong>：<ul>
+<li>结合**关键词检索（如 BM25）*<em>和*<em>向量检索</em></em>。关键词保证了精确匹配，向量保证了语义匹配。</li>
+<li>使用**倒排秩融合（RRF）**等算法合并两路结果，得到更可靠的候选集。</li>
+</ul>
+</li>
+</ul>
+<p><strong>4. 查询重写&#x2F;转换 (Query Transformation)</strong></p>
+<ul>
+<li><strong>问题</strong>：用户的原始查询可能过于简单、模糊或复杂。</li>
+<li><strong>解决方案</strong>：<ul>
+<li><strong>多查询召回 (Multi-Query Retrieval)</strong>: 让 LLM 将用户的原始查询扩展成多个不同角度、更具体的子查询，然后分别进行检索，合并结果。</li>
+<li><strong>HyDE (Hypothetical Document Embeddings)</strong>: 让 LLM 先根据用户问题生成一个“假设性”的理想答案，然后用这个答案的 Embedding 去检索，通常能找到更相关的内容。</li>
+</ul>
+</li>
+</ul>
+<p><strong>5. 引入重排器 (Re-ranker)</strong></p>
+<ul>
+<li><strong>问题</strong>：初步检索（召回）回来的 Top-K 个文档块可能包含很多“噪音”。</li>
+<li><strong>解决方案</strong>：<ul>
+<li>在召回和生成之间增加一个**重排（Re-ranking）**阶段。</li>
+<li>使用更强大但计算量也更大的模型（如 Cross-Encoders）对召回的 Top-K 文档进行重新打分，筛选出与查询<strong>真正相关</strong>的几个文档块送入 LLM。这能极大地过滤掉干扰信息。</li>
+</ul>
+</li>
+</ul>
+<p><strong>阶段二：事中控制 —— 优化生成过程</strong></p>
+<p>当检索回来的上下文质量已经很高了，我们还需要“管住”LLM，让它更忠实于给定的信息。</p>
+<p><strong>1. 强化提示工程 (Prompt Engineering)</strong></p>
+<p>这是最直接、成本最低的方法。</p>
+<ul>
+<li><strong>问题</strong>：简单的提示无法约束 LLM 的行为。</li>
+<li><strong>解决方案</strong>：在 Prompt 中给出<strong>非常明确的指令</strong>。<ul>
+<li><strong>限定信息来源</strong>：“你必须且只能使用下面提供的‘上下文’来回答问题。”</li>
+<li><strong>定义未知情况</strong>：“如果上下文中没有足够的信息来回答问题，请直接回答‘根据我所掌握的资料，无法回答您的问题’，不要自己猜测。”</li>
+<li><strong>要求引用</strong>：“在回答时，必须注明信息来源于哪一段原文（引用溯源）。”</li>
+</ul>
+</li>
+</ul>
+<h2 id="在选择向量数据库时，有没有看过其他的？它们之间的区别你大概有概念吗？"><a href="#在选择向量数据库时，有没有看过其他的？它们之间的区别你大概有概念吗？" class="headerlink" title="在选择向量数据库时，有没有看过其他的？它们之间的区别你大概有概念吗？"></a><mark>在选择向量数据库时，有没有看过其他的？它们之间的区别你大概有概念吗</mark>？</h2><p><strong>1、Chroma</strong></p>
+<ul>
+<li>**核心优势：**主要在 <mark><strong>Python 环境</strong></mark>下工作，尤其是使用 <a target="_blank" rel="noopener" href="https://zhida.zhihu.com/search?content_id=258345743&content_type=Article&match_order=1&q=LangChain&zhida_source=entity">LangChain</a> 或 <a target="_blank" rel="noopener" href="https://zhida.zhihu.com/search?content_id=258345743&content_type=Article&match_order=1&q=LlamaIndex&zhida_source=entity">LlamaIndex</a>。对<mark>小规模数据集（百万级以下）性能表现良好</mark>，查询延迟适中，适合快速原型开发。</li>
+<li>**社区：**社区较小但活跃，<mark>轻量级，API 简单，适合新手和快速开发项目</mark>，文档简单明了。地址：<a href="https://link.zhihu.com/?target=https://github.com/chroma-core/chroma">https://github.com/chroma-core/chroma</a>， 19.4k stars（20250422）。</li>
+<li>**局限性：**无原生持久化存储，依赖外部数据库；<mark>超10亿向量时性能下降40%</mark>。</li>
+</ul>
+<p><strong>场景 1：“我什么时候应该坚守 PGVector？”</strong></p>
+<ul>
+<li><strong>条件：</strong><ul>
+<li><mark>你的向量数据量不大（百万级到千万级）。</mark></li>
+<li><mark>查询 QPS 不高，且对延迟不那么敏感（百毫秒级可接受）。</mark></li>
+<li>你的查询逻辑里，<mark><strong>元数据过滤条件很简</mark>单</strong>（比如只有一个 WHERE user_id &#x3D; ?）。</li>
+<li>你的团队技术栈单一，引入新中间件的审批流程复杂，或运维人力紧张。</li>
+<li><strong>架构极简，零额外学习与运维成本 (Zero-Friction Adoption)</strong><ul>
+<li><strong>本质：</strong> <mark>它只是 PostgreSQL 的一个插件。</mark></li>
+<li><strong>优势：</strong> 不需要引入、部署和维护任何新的分布式中间件。团队现有的 SQL 知识、ORM 框架（JPA&#x2F;MyBatis）、备份工具、监控体系全部<strong>100% 直接复用</strong>。这让项目能够以极低的门槛快速启动。</li>
+</ul>
+</li>
+<li><strong>绝对的数据一致性保障 (<mark>ACID Transactions)</strong></mark><ul>
+<li><strong>本质：</strong> 向量数据只是关系型表中的一个普通字段（VECTOR 类型）。</li>
+<li><strong>优势：</strong> 彻底告别“业务数据存 MySQL，向量数据存 Milvus”带来的分布式事务噩梦。你可以在<strong>同一个数据库事务</strong>中，同时对用户的业务信息和向量特征进行原子性的 INSERT&#x2F;UPDATE&#x2F;DELETE。要么全成功，要么全回滚，保证了数据逻辑的绝对安全。</li>
+</ul>
+</li>
+<li><strong>无缝融合的复杂混合查询 (Powerful Hybrid Search)</strong><ul>
+<li><strong>本质：</strong> 背后是强大的 PostgreSQL 关系型查询引擎。</li>
+<li><strong>优势：</strong> 真实的 RAG 场景往往需要极其复杂的过滤条件（比如：按用户 ID 隔离、多表 JOIN 筛选状态、按时间段过滤等）。PGVector 允许你用最熟练的 SQL 语法，<mark>在一行代码里<strong>同时完成复杂的结构化数据过滤和高维向量的相似度计算</strong></mark>。这种关系型数据与向量数据的深度结合，是很多专用向量数据库的软肋。</li>
+</ul>
+</li>
+<li><strong>极佳的成本效益与架构演进起点 (Cost-Effective &amp; Evolutionary)</strong><ul>
+<li><strong>本质：</strong> 复用现有硬件资源，无需额外采购机器。</li>
+<li><strong>优势：</strong> 在项目初期或数据量中等（百万级）时，它是性价比最高的方案。即使未来业务爆发，数据量上亿导致 PGVector 出现性能瓶颈，也可以平滑地将其作为业务库，再将向量计算部分迁移到专业的 Qdrant 或 Milvus 中。这是一种极具弹性和低风险的<strong>渐进式架构演进</strong>策略。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>决策：</strong> <strong>继续使用 PGVector。</strong> 在这个舒适区内，它的便捷性带来的收益，远大于它在性能上的妥协。</li>
+</ul>
+<p><strong>场景 2：“我什么时候应该考虑从 PGVector 迁移到 Qdrant？”</strong></p>
+<ul>
+<li><strong>条件：</strong><ul>
+<li>你发现带<mark><strong>多个复杂 WHERE 条件的向量查询，延迟飙升到秒级</strong>，已经成为系统瓶颈</mark>。例如：“找出过去 7 天内，由 A 部门创建，且包含‘AI’标签的所有文档的相似内容”。</li>
+<li>你的<mark><strong>内存成本压力巨大</strong></mark>。你想在不显著牺牲精度的前提下，<mark>用更少的内存装载更多的向量</mark>（Qdrant 的标量量化能将内存占用降低 4 倍）。</li>
+<li>你追求极致的低延迟，希望 P99 响应时间控制在 50ms 以内。</li>
+</ul>
+</li>
+<li><strong>决策：</strong> <strong>优先迁移到 Qdrant。</strong> 它强大的 Pre-filtering 能力和出色的资源效率，能完美解决 PGVector 在这些场景下的痛点。对于大部分从 PGVector 升级而来的中等规模应用，Qdrant 是性价比最高的选择。</li>
+</ul>
+<p><strong>场景 3：“我什么时候需要考虑 Milvus 这种‘航母级’方案？”</strong></p>
+<ul>
+<li><strong>条件：</strong><ul>
+<li>你的 Agent 应用即将服务于海量的 C 端用户，预计向量数据会达到<mark><strong>数亿甚至百亿级别</strong></mark>。</li>
+<li><mark>架构极其沉重。</mark></li>
+<li>你对系统的**SLA（服务等级协议）**有极高的要求，需要一个经过大规模生产环境严苛考验、社区生态极其成熟、功能全面（多租户、RBAC 权限控制等）的解决方案。</li>
+<li>你的公司有成熟的 K8s 运维体系，能够驾驭一个复杂的分布式系统。</li>
+</ul>
+</li>
+</ul>
+<h2 id="我们一般怎么从历史对话中更新记忆，举个例子，我现在是3层记忆，一个是markdown文档保存用户偏好，职业等信息，另一个是markdown文档保存每日的细节，命名为-yy-mm-day，还有一个就是rag保存一些示例，bug等信息，我怎么更新呢，我怎么提取这些信息更新呢"><a href="#我们一般怎么从历史对话中更新记忆，举个例子，我现在是3层记忆，一个是markdown文档保存用户偏好，职业等信息，另一个是markdown文档保存每日的细节，命名为-yy-mm-day，还有一个就是rag保存一些示例，bug等信息，我怎么更新呢，我怎么提取这些信息更新呢" class="headerlink" title="我们一般怎么从历史对话中更新记忆，举个例子，我现在是3层记忆，一个是markdown文档保存用户偏好，职业等信息，另一个是markdown文档保存每日的细节，命名为-yy-mm-day，还有一个就是rag保存一些示例，bug等信息，我怎么更新呢，我怎么提取这些信息更新呢"></a><mark>我们一般怎么从历史对话中更新记忆，举个例子，我现在是3层记忆，一个是markdown文档保存用户偏好，职业等信息，另一个是markdown文档保存每日的细节，命名为-yy-mm-day，还有一个就是rag保存一些示例，bug等信息，我怎么更新呢，我怎么提取这些信息更新呢</mark></h2><p><strong>详细更新流程</strong></p>
+<p><strong>第一步：触发更新（Trigger）</strong></p>
+<p>这部分不变，依然是在<strong>会话结束、用户闲置超时、或对话达到一定长度</strong>时，将完整的对话历史（比如最近 20 轮）推送到消息队列（MQ）。</p>
+<p><strong>第二步：启动“记忆管理员”代理 (Memory Administrator Agent)</strong></p>
+<p>后台的 Worker 服务消费这条消息，然后启动一个专门的 LLM Chain，我们称之为“记忆管理员”。</p>
+<ul>
+<li><strong>输入 (Input)</strong>：<ol>
+<li>完整的对话历史记录。</li>
+<li><mark><strong>（可选但强烈建议）</strong> 用户当前的 Profile.md 和今天的 Journal-YYYY-MM-DD.md 的内容。这能帮助模型避免重复记录，或者进行修改而不是新增。</mark></li>
+</ol>
+</li>
+<li><strong>核心任务 (Core Task)</strong>：<br>模型需要扮演一个严谨的档案管理员。它的任务不是生成对话，而是<strong>分析文本，并输出结构化的 JSON 指令</strong>。</li>
+</ul>
+<p><strong>第三步：设计“记忆管理员”的指令与 Prompt</strong></p>
+<p>这是整个流程的灵魂。我们需要给模型一个非常精确的 Prompt。</p>
+<p><strong>示例 Prompt:</strong></p>
+<p>codeCode</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs clean">你是一个专业的个人信息档案管理员。你的任务是阅读一段用户与AI的对话历史，并从中提取需要被长期记忆的关键信息。<br><br>根据信息的性质，将其分类为以下三种类型之一：<br><span class="hljs-number">1.</span> <span class="hljs-string">&#x27;profile&#x27;</span>: 用户的核心身份、长期偏好、关键事实（如职业、家庭、过敏史）。这些信息需要更新到用户的永久档案中。<br><span class="hljs-number">2.</span> <span class="hljs-string">&#x27;journal&#x27;</span>: 用户提到的短期事件、待办事项、当天的心情或计划。这些信息需要记录到当天的日志中。<br><span class="hljs-number">3.</span> <span class="hljs-string">&#x27;knowledge&#x27;</span>: 可被复用的知识点、代码片段、解决方案、特定领域的 Bug 信息。这些信息需要存入可被检索的知识库。<br><br>如果信息是无意义的闲聊（如“好的”、“谢谢”），请忽略。<br><br># 输入数据:<br>## 当前 Profile.md 内容:<br>... (当前 profile.md 的内容) ...<br><br>## 对话历史:<br>... (最近的对话历史) ...<br><br># 输出要求:<br>请以一个 JSON 数组的格式输出你需要执行的更新操作。每个操作都是一个对象，包含 <span class="hljs-string">&#x27;memory_type&#x27;</span> 和 <span class="hljs-string">&#x27;content&#x27;</span> 两个字段。如果没有任何需要记忆的信息，请返回一个空数组 []。<br></code></pre></td></tr></table></figure>
+
+<p><strong>一个完整的例子</strong></p>
+<p><strong>假设有以下对话历史：</strong></p>
+<blockquote>
+<p><strong>AI:</strong> 您好，有什么可以帮您的吗？<br><strong>用户:</strong> 嗯，我最近刚升职，现在是<strong>高级软件工程师</strong>了，很高兴！另外，提醒我一下，<strong>明天下午 2 点有个牙医预约</strong>。<br><strong>AI:</strong> 恭喜您升职！已经为您记下明天下午的预约。<br><strong>用户:</strong> 谢谢。对了，我昨天写 Python 遇到的那个 JSON 解析问题，发现用 orjson 这个库比自带的 json 库快很多，这是<strong>示例代码: import orjson; data &#x3D; orjson.loads(json_string)</strong>。这个可以记一下，以后可能会用到。</p>
+</blockquote>
+<p><strong>“记忆管理员”代理分析后，会输出以下 JSON 指令：</strong></p>
+<p>codeJSON</p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs prolog">[<br>  &#123;<br>    <span class="hljs-string">&quot;memory_type&quot;</span>: <span class="hljs-string">&quot;profile&quot;</span>,<br>    <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;用户的职业已更新为：高级软件工程师。&quot;</span><br>  &#125;,<br>  &#123;<br>    <span class="hljs-string">&quot;memory_type&quot;</span>: <span class="hljs-string">&quot;journal&quot;</span>,<br>    <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;待办事项：明天下午 2 点有牙医预约。&quot;</span><br>  &#125;,<br>  &#123;<br>    <span class="hljs-string">&quot;memory_type&quot;</span>: <span class="hljs-string">&quot;knowledge&quot;</span>,<br>    <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;Python 知识点：使用 orjson 库可以加速 JSON 解析。示例代码：import orjson; data = orjson.loads(json_string)&quot;</span><br>  &#125;<br>]<br></code></pre></td></tr></table></figure>
+
+<p><strong>第四步：执行结构化更新 (Execute Structured Updates)</strong></p>
+<p>后台的 Worker 服务拿到这个 JSON 数组后，会遍历它，并根据 memory_type 将更新路由到不同的执行逻辑中：</p>
+<ol>
+<li><strong>处理 profile 更新</strong>：<ul>
+<li><strong>动作</strong>：编辑 Profile.md 文件。</li>
+<li><strong>逻辑</strong>：<ol>
+<li>在事务中锁定并读取用户的 Profile.md 文件。</li>
+<li>解析 Markdown 内容（例如，找到 # 职业 这个二级标题）。</li>
+<li>用新的内容“高级软件工程师”<strong>替换</strong>掉旧的职业信息。</li>
+<li>保存文件并释放锁。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><strong>处理 journal 更新</strong>：<ul>
+<li><strong>动作</strong>：追加到 Journal-YYYY-MM-DD.md 文件。</li>
+<li><strong>逻辑</strong>：<ol>
+<li>获取当前日期，定位到当天的 Journal 文件。</li>
+<li>如果文件不存在，则创建一个，并写入今天的日期作为标题。</li>
+<li>在文件末尾<strong>追加</strong>新的内容，可以附带一个时间戳，例如 [15:30] 待办事项：明天下午 2 点有牙医预约。。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><strong>处理 knowledge 更新</strong>：<ul>
+<li><strong>动作</strong>：存入 RAG 知识库（向量数据库）。</li>
+<li><strong>逻辑</strong>：<ol>
+<li>将 content 中的文本（”Python 知识点：…”) 作为源数据。</li>
+<li>调用 <strong>Embedding 模型</strong>将其转化为向量。</li>
+<li>将文本和向量一起**存入（Upsert）**到向量数据库中。</li>
+<li>（重要）在 Metadata 中打上标签，如 {“user_id”: “u_123”, “source”: “conversation_abc”, “tags”: [“python”, “json”]}，以便未来进行更精确的 RAG 检索。</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>优化点 3：按需加载 (Dynamic Context Injection)，拒绝“大锅炖”</strong></p>
+<p><strong>当前痛点：</strong><br>“每轮会话 &#x3D; 短期记忆 + 近两天文档 + RAG 检索 + 用户偏好”。不管用户问什么，这四样东西全塞进去，Prompt 会非常臃肿。</p>
+<p><mark><strong>优化方案：引入“意图路由 (Intent Routing)”</strong></mark><br>在将用户的提问组装 Prompt 之前，加一个极轻量级的步骤（可以用正则、或者极小参数的本地模型、或者让大模型先做一次快速分类）：</p>
+<ul>
+<li><strong>场景 1：闲聊&#x2F;上下文追问</strong>（如：“那你刚才说的第二点呢？”）<ul>
+<li><strong>组装逻辑：</strong> 只加载【短期记忆】+【用户偏好】。<strong>跳过 RAG 和近两天文档的检索</strong>（极大地提升了响应速度）。</li>
+</ul>
+</li>
+<li><strong>场景 2：具体技术问题&#x2F;排查 Bug</strong>（如：“报了 NullPointerException 怎么查？”）<ul>
+<li><strong>组装逻辑：</strong> 加载【短期记忆】+【RAG 检索 (Bug案例)】。<strong>跳过近两天文档</strong>。</li>
+</ul>
+</li>
+<li><strong>场景 3：回顾历史</strong>（如：“我昨天下午让你写的那个代码片段还在吗？”）<ul>
+<li><strong>组装逻辑：</strong> 加载【短期记忆】+【近两天文档】。</li>
+</ul>
+</li>
+</ul>
+<h2 id="RAG如何进行隔离呢，用的是什么样的元数据过滤，具体是靠什么字段来区分的呢？"><a href="#RAG如何进行隔离呢，用的是什么样的元数据过滤，具体是靠什么字段来区分的呢？" class="headerlink" title="RAG如何进行隔离呢，用的是什么样的元数据过滤，具体是靠什么字段来区分的呢？"></a>RAG如何进行隔离呢，用的是什么样的元数据过滤，具体是靠什么字段来区分的呢？</h2><ol>
+<li><p><strong>文档加载 (Loading)：</strong></p>
+<ul>
+<li>通过 API 接口接收用户上传的文件（PDF, Word, Markdown 等）。在 Java 后端，我会使用像 <strong>Apache POI</strong> (处理 Word&#x2F;Excel) 或 <strong>PDFBox</strong> (处理 PDF) 这样的库来读取原始文件内容。对于更复杂的非结构化文档，我会考虑集成 <strong>Unstructured.io</strong> 这样的专业解析服务。</li>
+</ul>
+</li>
+<li><p><strong>根据用户id进行隔离</strong></p>
+</li>
+<li><h4 id="第三部分：用什么样的元数据过滤？具体靠什么字段来区分？"><a href="#第三部分：用什么样的元数据过滤？具体靠什么字段来区分？" class="headerlink" title="第三部分：用什么样的元数据过滤？具体靠什么字段来区分？"></a>第三部分：用什么样的元数据过滤？具体靠什么字段来区分？</h4><p>除了上述用于<strong>强制隔离</strong>的 tenant_id，为了实现更精细化、更智能的检索，我会提取并利用以下几类元数据字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段名 (metadata 中的 Key)</th>
+<th>字段类型</th>
+<th>作用与来源</th>
+<th>如何用于过滤？</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>tenant_id (租户ID)</strong></td>
+<td>String</td>
+<td><strong>【核心隔离字段】</strong> 从用户认证信息中获取。</td>
+<td><strong>强制 WHERE 条件</strong>，实现多租户数据隔离。</td>
+</tr>
+<tr>
+<td><mark><strong>user_id (用户ID)</strong></mark></td>
+<td>String</td>
+<td>从用户认证信息中获取。</td>
+<td>过滤出某个用户自己的私人知识库。</td>
+</tr>
+<tr>
+<td><mark><strong>document_id (文档ID)</strong></mark></td>
+<td>UUID&#x2F;String</td>
+<td>上传文档时生成，关联原始文件。</td>
+<td>允许用户只在“指定的某篇文档”内进行搜索。</td>
+</tr>
+<tr>
+<td><mark><strong>source_type (来源类型)</strong></mark></td>
+<td>String (Enum)</td>
+<td>标识数据来源，如 “pdf”, “chat_history”, “faq”。</td>
+<td>过滤特定类型的知识，比如只在 FAQ 中找答案。</td>
+</tr>
+<tr>
+<td><mark><strong>tags (标签)</strong></mark></td>
+<td>Array<String></td>
+<td>用户上传时手动打标，或用 LLM 自动提取关键词。</td>
+<td>允许用户通过标签进行精确筛选，如 tags: [“Java”, “性能优化”]。</td>
+</tr>
+<tr>
+<td><strong>created_at (创建时间戳)</strong></td>
+<td>Long</td>
+<td>数据入库时的时间。</td>
+<td>实现时间范围过滤，如“只搜过去7天的文档”。</td>
+</tr>
+<tr>
+<td><strong>security_level (安全级别)</strong></td>
+<td>Integer (Enum)</td>
+<td>标识数据敏感度，如 1(公开), 2(内部), 3(机密)。</td>
+<td>结合用户权限，过滤掉用户无权查看的敏感信息。</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<h2 id="RAG数据源如何解决时效问题，知识过期了怎么办"><a href="#RAG数据源如何解决时效问题，知识过期了怎么办" class="headerlink" title="RAG数据源如何解决时效问题，知识过期了怎么办"></a>RAG数据源如何解决时效问题，知识过期了怎么办</h2><p>“仅仅能同步还不够，关键是<strong>在向量数据库中如何精准地找到并替换掉那块‘过期的小抄’</strong>。这极其依赖我们在存入数据时的<strong>元数据（Metadata）设计</strong>。</p>
+<ol>
+<li><mark><strong>强绑定 doc_id 与 chunk_id</strong></mark><ul>
+<li><strong>痛点</strong>：如果你只是把一段段文本（Chunk）塞进向量库，当一篇文档更新时，你根本不知道该删掉库里的哪些向量。</li>
+<li><strong>方案</strong>：在切块存入时，必须给每个 Chunk 打上元数据标签：{“source_doc_id”: “file_123”, “chunk_index”: 5, “last_updated”: “2024-05-20”}。</li>
+<li><strong>更新逻辑 (Upsert)</strong>：当 file_123 被修改时，系统先去向量库里执行一个 DELETE WHERE source_doc_id &#x3D; ‘file_123’，把旧的所有切块全部删干净；然后再把重新解析的新切块 INSERT 进去。这样就完美避免了新旧知识的冲突。</li>
+</ul>
+</li>
+<li><mark><strong>引入 TTL (Time-To-Live) 自动过期机制</strong></mark><ul>
+<li><strong>场景</strong>：对于一些天然具有极短生命周期的数据（比如：“今天下午三点的会议纪要”、“双十一当天的临时促销规则”）。</li>
+<li><strong>方案</strong>：很多现代向量数据库（如 Milvus, Qdrant, Redis）都支持给数据设置 TTL。我们在入库时直接带上过期时间，时间一到，数据库底层自动物理删除这些数据，连同步的逻辑都省了，极其优雅。</li>
+</ul>
+</li>
+<li><strong>应用层的时间衰减打分 (Time-Weighted Reranking)</strong><ul>
+<li>这是一个非常高阶的玩法。如果不强制过滤，而是希望<strong>越新的文档权重越高</strong>。</li>
+<li>在拿到向量召回的 Top-50 结果后，在应用层写一个打分公式：Final_Score &#x3D; Vector_Score * Exponential_Decay(Current_Time - last_updated)。</li>
+<li>距离现在越久远的文档，分数被惩罚得越厉害。重排后取 Top-5 喂给大模型。这样既能召回历史，又能保证模型永远优先看到最新发布的知识。</li>
+</ul>
+</li>
+<li><strong>置信度删除</strong></li>
+</ol>
+<h2 id="讲一下embedding-的原理，以及你的项目用的是什么模型，和其他的模型比较有什么用的不同么？"><a href="#讲一下embedding-的原理，以及你的项目用的是什么模型，和其他的模型比较有什么用的不同么？" class="headerlink" title="讲一下embedding 的原理，以及你的项目用的是什么模型，和其他的模型比较有什么用的不同么？"></a><mark>讲一下embedding 的原理，以及你的项目用的是什么模型，和其他的模型比较有什么用的不同么？</mark></h2><p>“要理解 Embedding（词嵌入&#x2F;向量化），核心只需记住一句话：<strong>它是把人类理解的‘离散的词语或句子’，映射到计算机能理解的‘连续的高维数学空间’中，并且让语义相近的词，在这个空间里的距离更近。</strong>”</p>
+<p>我选的是千问-v3-768B</p>
+<p>我做出这个选择，主要是基于以下三个核心差异点和业务契合度：”</p>
+<p><strong>1. 极致的中文与多语言混合理解能力 (The Multi-lingual Advantage)</strong></p>
+<ul>
+<li><strong>差异点：</strong> 很多<mark>海外顶尖模型（如 OpenAI 早期版本）在处理纯英文时天下无敌，但在处理中文，尤其是<strong>中英文夹杂的专业文献、行业黑话、甚至是带有方言口语的客服聊天记录</strong>时，</mark>经常会出现语义理解偏差（比如把“苹果手机”和“吃苹果”的向量算得很近）。而<mark>国内一些早期的开源模型又往往只擅长纯中文。</mark></li>
+<li><strong>千问的优势：</strong> 千问模型在训练时使用了海量的高质量中英双语语料。在实际测试中我发现，它对于<mark>国内复杂的、中英混杂的业</mark>务场景（比如我们的代码注释、SaaS 产品的多语言文档），语义捕捉得极其精准。它在权威的 <mark>MTEB（多语言文本嵌入基准）评测中经常名列前茅</mark>，<strong>这种‘中英双修’的能力是我们业务非常看重的</strong>。</li>
+</ul>
+<p>2.<strong>针对 RAG “非对称检索”的深度优化 (The Asymmetric Retrieval Focus)</strong></p>
+<ul>
+<li><strong>差异点：</strong> 在真实的 RAG 场景中，用户的提问（Query）通常只有几个字（比如：“年假怎么算？”），而知识库里的文档（Document）通常长达上千字（比如《员工手册》第三章）。<mark>短文本和长文本在向量空间里的分布天然存在差异</mark>。如果模型不加区分地一锅炖，检索的准确率（Recall）会大打折扣。</li>
+<li><strong>千问的优势（特别是较新版本）：</strong> <mark>千问的向量模型专门针对这种“短文本搜长文本”的非对称检索场景进行了优化</mark>。它能够更好地理解简短 Query 背后蕴含的意图，并将其与长篇 Document 的核心主题对齐。这使得我们的系统在面对用户极其口语化、碎片化的提问时，依然能从厚厚的知识库中精准捞出正确的段落。</li>
+</ul>
+<p><strong>3.对于初期想快速跑通业务闭环、不想被底层基建拖累的团队来说，<mark>它的综合性价比（API 价格往往比海外便宜几个数量级）和生态友好度极高</mark>。</strong></p>
+<h2 id="重排模型（Reranker）的原理是什么？（"><a href="#重排模型（Reranker）的原理是什么？（" class="headerlink" title="重排模型（Reranker）的原理是什么？（"></a>重排模型（Reranker）的原理是什么？（</h2><p><strong>. 重排模型（Reranker）的原理是什么？（Cross-Encoder 交叉注意力原理）</strong></p>
+<ul>
+<li>它是基于 Transformer 的 <strong>交叉编码器（Cross-Encoder）</strong> 架构。</li>
+<li><strong>底层机制</strong>：它不生成向量。它将 Query 和 Document <strong>拼接成一整句话</strong>送入模型。例如：[CLS] 用户问题 [SEP] 候选文档内容 [SEP]。</li>
+<li><strong>深层化学反应（Self-Attention）</strong>：在 Transformer 的每一层网络中，Query 中的<strong>每一个字</strong>都会和 Document 中的<strong>每一个字</strong>进行计算（这就是大名鼎鼎的 Self-Attention 注意力机制）。</li>
+<li><strong>为什么它准？</strong> 因为它能理解上下文的“动态纠缠”。<ul>
+<li><em>举例</em>：Query 是“苹果公司的利润”，Doc 是“这台榨汁机能榨苹果，公司利润很高”。</li>
+<li>在粗排（向量）中，因为“苹果”、“公司”、“利润”词汇全命中，相似度可能极高。</li>
+<li>在精排（Reranker）中，注意力机制在逐字审视时，会发现 Doc 里的“苹果”修饰的是“榨汁机”，与 Query 中的“苹果公司”这个整体实体在语义矩阵上对不上号，因此会在输出层给出极低的分数（趋近于 0）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="HNSW与IVF"><a href="#HNSW与IVF" class="headerlink" title="HNSW与IVF"></a>HNSW与IVF</h2><p><strong>IVF (Inverted File) 倒排文件索引</strong></p>
+<p><strong>1. 底层原理</strong></p>
+<p>IVF 的思想完全借鉴了传统搜索引擎的“倒排索引”（从单词找到包含该单词的文档列表）。在向量领域，它变成了：<strong>从“聚类中心”找到“属于该聚类的向量列表”</strong>。</p>
+<ul>
+<li><strong>建索引阶段 (Training &amp; Building)：</strong><ol>
+<li><strong>聚类 (Clustering)：</strong> 从海量数据中随机抽取一部分样本，使用 K-Means 等聚类算法，将整个向量空间划分为 nlist 个区域。每个区域的中心点被称为<strong>质心 (Centroid)</strong>。</li>
+<li><strong>分配 (Assigning)：</strong> 遍历所有的向量，计算每个向量与所有 nlist 个质心的距离，然后将该向量放入距离最近的那个质心所代表的“桶（Bucket）”里。</li>
+</ol>
+</li>
+<li><strong>查询阶段 (Searching)：</strong><ol>
+<li><strong>定位桶：</strong> 将查询向量（Query Vector）与所有 nlist 个质心进行比较，找出距离最近的 nprobe 个质心。</li>
+<li><strong>桶内搜索：</strong> 只在这 nprobe 个桶内，进行精确的、暴力的距离计算，找出最终的 Top-K 相似向量。</li>
+</ol>
+</li>
+</ul>
+<h2 id="对知识库进行动态增量更新，怎么避免新旧文档的分布不一致导致的检索偏差问题？"><a href="#对知识库进行动态增量更新，怎么避免新旧文档的分布不一致导致的检索偏差问题？" class="headerlink" title="对知识库进行动态增量更新，怎么避免新旧文档的分布不一致导致的检索偏差问题？"></a><mark>对知识库进行动态增量更新，怎么避免新旧文档的分布不一致导致的检索偏差问题？</mark></h2><h2 id="我有个问题就是我Rag文档中，就是有些文档是有时效性的问题，有些问题没有时效性的问题，是个新的词，但是呢旧的文档是个旧的名词仍然有用这样怎么解决呢？"><a href="#我有个问题就是我Rag文档中，就是有些文档是有时效性的问题，有些问题没有时效性的问题，是个新的词，但是呢旧的文档是个旧的名词仍然有用这样怎么解决呢？" class="headerlink" title="我有个问题就是我Rag文档中，就是有些文档是有时效性的问题，有些问题没有时效性的问题，是个新的词，但是呢旧的文档是个旧的名词仍然有用这样怎么解决呢？"></a><mark>我有个问题就是我Rag文档中，就是有些文档是有时效性的问题，有些问题没有时效性的问题，是个新的词，但是呢旧的文档是个旧的名词仍然有用这样怎么解决呢？</mark></h2><p><strong>第二步：解决“新旧词汇交替” —— 引入“查询重写（Query Rewrite）”与同义词库</strong></p>
+<p><strong>痛点场景：</strong> 以前老系统叫 Alpha，里面沉淀了大量有价值的底层设计文档。现在系统升级或改名了，对外统一叫 Omega。用户提问：“Omega 系统的底层架构是什么？” 如果直接拿去查向量，可能根本搜不到旧文档里 Alpha 的高价值内容。</p>
+<p><strong>解决方案：在检索前，进行“意图拦截与查询扩展”。</strong></p>
+<ol>
+<li><p><strong>建立企业内部词典（知识图谱雏形）</strong>：维护一个简单的映射关系，如 {“Omega”: [“Alpha”, “旧版架构”, “V1系统”]}。</p>
+</li>
+<li><p><strong>利用大模型（或规则）重写用户的 Query</strong>：<br>当用户输入：“Omega 系统的底层架构是什么？”<br>我们利用一个小模型（或简单的代码逻辑）在后台将搜索词<strong>扩充</strong>为：</p>
+<blockquote>
+<p><strong>重写后的搜索词</strong>：”Omega 系统的底层架构 OR Alpha 系统的底层架构”</p>
+</blockquote>
+</li>
+<li><p><strong>拿着重写后的词去检索</strong>：这样一来，向量数据库不仅能搜到包含新词的文档，也能将历史库中包含 Alpha 且极具参考价值的旧文档一并“召回（Retrieve）”。</p>
+</li>
+</ol>
+<p><strong>第四步：大模型防幻觉 —— 显式拼接上下文与“打补丁 Prompt”</strong></p>
+<p>即使我们精准地把文档都搜出来了（里面既有关于 Alpha 的旧段落，也有关于 Omega 的新段落），大模型其实是个“没有时间概念的失忆症患者”。如果你直接把这些文本扔给它，它很可能会觉得你在给它两份互相矛盾的资料。</p>
+<p><strong>解决方案：必须在系统提示词（System Prompt）中对它进行“严厉的规则约束”，并且把时间属性暴露给它。</strong></p>
+<p><strong>方案一：最强硬的拦截 —— “检索后置替换（Post-Retrieval Replacement）”</strong></p>
+<p>这是最简单、最不易让大模型产生幻觉的方案。<strong>核心思想是：不让大模型看到任何旧名词。</strong></p>
+<ol>
+<li><strong>用户提问</strong>：“Omega 系统的架构是什么？”</li>
+<li><strong>查询重写</strong>（之前的第二步）：扩充为 “Omega 架构 OR Alpha 架构”。</li>
+<li><strong>向量检索</strong>：从数据库里捞出了 5 个 Chunk，其中 3 个里面写满了 Alpha。</li>
+<li><strong>工程代码介入（关键点）</strong>：<br>在把这 5 个 Chunk 塞进 Prompt 之前，在你的 Java&#x2F;Python 后端代码里，根据词典映射（Alpha -&gt; Omega），<strong>直接用代码执行全局字符串替换（String Replace）</strong>。<br>把文档里的：<em>“Alpha 系统的底层采用了微服务…”</em><br>强制替换为：<em>“Omega 系统的底层采用了微服务…”</em></li>
+<li><strong>发送给大模型</strong>：此时，大模型收到的 5 个 Chunk，里面<strong>全都是统一的 Omega 称呼</strong>，完全没有任何 Alpha 的字眼。</li>
+<li><strong>大模型生成</strong>：大模型毫无认知负担，直接根据统一的文本生成完美的答案。</li>
+</ol>
+<ul>
+<li><strong>优点</strong>：大模型绝对不会发生名词幻觉，生成的答案最干净。</li>
+<li><strong>缺点</strong>：有点“篡改历史”。如果业务场景要求极度严谨（必须标明某句话确实出自当年的 Alpha 文档），这个方案就不合适。</li>
+</ul>
+<p><strong>方案二：最优雅的解法 —— “Agent 两步走（事实清洗 -&gt; 面向用户生成）”</strong></p>
+<p>如果不允许直接篡改检索回来的原文，我们就需要用 <strong>Agent 工作流（Workflow）</strong> 的思想，把原本的一步生成，拆成两步。这就是你说的“把映射关系发给它”的最科学做法。</p>
+<p><strong>第一步：LLM 充当“事实提取与归一化专员”</strong><br>不要直接让大模型回答用户，而是先让它做一次<strong>内部的数据清洗</strong>。</p>
+<ul>
+<li><p><strong>我们发给大模型的 Prompt 1（内部处理）</strong>：</p>
+<p>codeText</p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs prolog">【任务】你是一个信息抽取助手。请从以下[参考文档]中提取出关于系统架构的所有事实。<br>【术语词典映射】：&#123;<span class="hljs-string">&quot;Alpha&quot;</span>: <span class="hljs-string">&quot;Omega 的旧称&quot;</span>&#125;<br>【要求】：提取事实时，请将所有旧称统一替换为最新名称（<span class="hljs-symbol">Omega</span>）。忽略与架构无关的信息。只输出客观事实列表。<br><br>[参考文档]<br><span class="hljs-symbol">Chunk</span> <span class="hljs-number">1</span>: <span class="hljs-symbol">Alpha</span> 系统的底层采用了微服务...<br><span class="hljs-symbol">Chunk</span> <span class="hljs-number">2</span>: <span class="hljs-symbol">Omega</span> 系统新增了分布式锁...<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>大模型的内部输出（这一步用户看不到）</strong>：</p>
+<p>codeText</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs markdown"><span class="hljs-bullet">1.</span> Omega 系统（原 Alpha）底层采用微服务架构。<br><span class="hljs-bullet">2.</span> Omega 系统新增了分布式锁机制。<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>第二步：LLM 充当“客服发言人”</strong><br>拿着第一步洗干净的、高度凝练的“事实列表”，去回答用户。</p>
+<ul>
+<li><p><strong>发给大模型的 Prompt 2（面向用户生成）</strong>：</p>
+<p>codeText</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs markdown">根据以下【核实过的事实列表】，回答用户的问题：“Omega 系统的架构是什么？”。要求语气专业、流畅。<br><br>【核实过的事实列表】：<br><span class="hljs-bullet">1.</span> Omega 系统底层采用微服务架构。<br><span class="hljs-bullet">2.</span> Omega 系统新增了分布式锁机制。<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>最终用户的完美体验</strong>：<br><em>“您好，Omega 系统的底层以微服务架构为核心，并在其基础上新增了分布式锁机制，以保障系统的……”</em></p>
+</li>
+</ul>
+<p><strong>总结（你可以这样回答面试官）</strong></p>
+<p>“您指出直接把带有不同名词的文档塞给大模型会让它困惑，这个直觉非常精准，这确实会导致大模型的认知过载和幻觉。</p>
+<p>为了彻底解决新旧名词在文档中交错的问题，我不会依赖简单的 Prompt 规则约束。我的架构设计是<strong>在检索和生成之间，插入一层‘数据归一化（Normalization）’逻辑</strong>：</p>
+<ol>
+<li>如果业务允许，我会采用<strong>代码拦截替换</strong>。在检索出包含旧名词（如 Alpha）的文档后，直接在内存中将文本替换为新名词（Omega），然后再喂给大模型，从根本上消灭大模型的理解歧义。</li>
+<li>如果是严谨的知识库场景，我会采用 <strong>Agentic RAG（分步编排）</strong>。先将提取出的混合文档和一个专有的『术语映射字典』发给大模型进行第一轮处理，它的任务仅仅是『提取事实并统一名词口径』；拿到洗干净的事实后，再进行第二轮面向最终用户的自然语言生成。</li>
+</ol>
+<h2 id="用过哪些向量模型"><a href="#用过哪些向量模型" class="headerlink" title="用过哪些向量模型"></a><mark>用过哪些向量模型</mark></h2><p><strong>智谱 AI: embedding-3</strong></p>
+<ul>
+<li><strong>地位：</strong> 国内最主流的 API 之一。</li>
+<li><strong>特点：</strong> 如果您在国内做企业级 RAG，通常会在阿里千问和智谱之间二选一。智谱的 embedding-3 在金融、法律等专业领域的垂直语料训练很扎实。</li>
+</ul>
+<h2 id="在构建知识库时，文本切块策略至关重要。你会如何选择合适的切块大小和重叠长度？这背后有什么权衡？"><a href="#在构建知识库时，文本切块策略至关重要。你会如何选择合适的切块大小和重叠长度？这背后有什么权衡？" class="headerlink" title="在构建知识库时，文本切块策略至关重要。你会如何选择合适的切块大小和重叠长度？这背后有什么权衡？"></a><mark>在构建知识库时，文本切块策略至关重要。你会如何选择合适的切块大小和重叠长度？这背后有什么权衡？</mark></h2><p><strong>核心回答策略：不要给出一个“万能数字（比如 512 token）”，而是要根据“模型上下文窗口、用户提问习惯、数据固有结构”三个维度来动态选择，并深刻剖析“块太大 vs 块太小”的致命博弈。</strong></p>
+<p>你可以这样回答：</p>
+<p>“文本切块（Chunking）是 RAG 知识库构建的第一步，也是最容易被忽视的一步。如果切得不好，后续的向量检索和 LLM 生成都会变成‘灾难’。</p>
+<p>在选择合适的切块大小（Chunk Size）和重叠长度（Overlap&#x2F;Stride）时，我没有一个固定的公式，而是基于以下几个维度的权衡（Trade-off）：</p>
+<p><strong>1. 切块大小 (Chunk Size) 的权衡与选择</strong></p>
+<ul>
+<li><strong>太小的 Chunk（如 100-250 Tokens）：</strong><ul>
+<li><strong>优势：</strong> <mark>向量表达极其精准（高内聚）</mark>。当用户搜索一个具体概念时，很容易通过余弦相似度匹配到这个小块。同时，喂给 LLM 时占用的 Context 很少，成本低、速度快。</li>
+<li><strong>劣势（致命伤）：</strong> <mark>严重丧失了<strong>上下文语境（Context Loss）</strong></mark>。比如一句话“他是个好人，但他今天杀了人”，如果被切成了两块，检索到第一块时，LLM 就完全得出了相反的结论。</li>
+</ul>
+</li>
+<li><strong>太大的 Chunk（如 1000-2000 Tokens）：</strong><ul>
+<li><strong>优势：</strong> <mark>保留了非常完整的上下文</mark>，LLM 在阅读理解时不容易出现断章取义的幻觉。</li>
+<li><strong>劣势：</strong> <mark>向量表达变得“模糊（Diluted）”</mark>。一个大块里可能包含了 A、B、C 三个不同的主题，它的向量中心点可能哪个都不挨着。当用户精确提问 A 时，这个大块的相似度得分反而拼不过那些只讲 A 的小块，导致<mark><strong>召回率（Recall）下降</strong></mark>。此外，大块极其消耗 LLM 的输入 Token 成本和推理时间。</li>
+</ul>
+</li>
+</ul>
+<p><strong>我的选择策略（实战经验）：</strong></p>
+<ol>
+<li><strong>看基座模型能力：</strong> 如果我用的模型<mark>上下文窗口极短（比如早期的 4K 模型），我只能切 300-500 tokens</mark>。如果我用的是支持 128K 甚至 1M 的模型（如 Claude 3 或 Kimi），<mark>我会倾向于切得稍微大一些（800-1000 tokens），优先保证上下文完整。</mark></li>
+<li><mark><strong>看数据固有结构（最推荐的做法）</mark>：</strong> 我不会简单粗暴地按固定字数去切（Fixed-size Chunking）。我会使用<strong>基于语义和文档结构的切分（Semantic&#x2F;Structural Chunking）</strong>。比如，通过 Markdown 的标题（#, ##）、段落（\n\n）或者 HTML 的 DOM 树来切。这保证了一个 Chunk 至少是一个完整的逻辑段落。</li>
+</ol>
+<p><strong>2. 重叠长度 (Overlap Size) 的权衡与选择</strong></p>
+<ul>
+<li><strong>为什么要重叠？</strong> 为了修补被强行切断的上下文。比如一句话正好卡在两个 Chunk 的边界上，如果不重叠，这句话的语义就支离破碎了。</li>
+<li><strong>太短的 Overlap（如 0-5%）：</strong> 起不到粘合上下文的作用。</li>
+<li><strong>太长的 Overlap（如 50%）：</strong> 导致知识库急剧膨胀，存储成本和向量检索的计算量翻倍，且在最终拼接到 Prompt 时会引入大量重复废话，干扰 LLM。</li>
+</ul>
+<p><strong>我的选择策略（实战经验）：</strong><br>通常我会将重叠长度设置在 Chunk Size 的 <strong>10% 到 20% 之间</strong>（比如 Chunk 是 500 tokens，Overlap 就设为 50-100 tokens）。这通常能恰好覆盖一个长句子的长度，足以保证相邻块之间的逻辑过渡。</p>
+<h2 id="如何选择一个合适的嵌入模型？评估一个-Embedding-模型的好坏有哪些指标？"><a href="#如何选择一个合适的嵌入模型？评估一个-Embedding-模型的好坏有哪些指标？" class="headerlink" title="如何选择一个合适的嵌入模型？评估一个 Embedding 模型的好坏有哪些指标？"></a>如何选择一个合适的嵌入模型？评估一个 Embedding 模型的好坏有哪些指标？</h2><p><strong>1. 核心选型考量维度 (How to Choose)</strong></p>
+<ol>
+<li><mark><strong>语言能力 (Language Support)：</strong></mark><ul>
+<li>如果我的知识库全是中文，或者包含大量中英文混排的术语，我绝对不能盲目使用只在英文语料上训练的开源模型。我会优先选择针对中文优化过的模型（如 BGE 系列，或智谱、百川的商用 Embedding）。</li>
+</ul>
+</li>
+<li><mark><strong>支持的最大上下文长度 (Max Sequence Length)：</strong></mark><ul>
+<li>很多经典的开源模型（如早期的 BERT 系列）最大只支持 512 Tokens。如果我的 Chunk Size 设了 1000，强行喂给这些模型，后面的 488 个 Tokens 会被直接无情截断丢弃，导致严重的特征丢失。因此，我必须选择支持至少 8192 甚至更高 Tokens 的长文本 Embedding 模型（如 Jina Embedding 或 OpenAI 最新模型）。</li>
+</ul>
+</li>
+<li><mark><strong>向量维度大小 (Dimensionality) 与存储成本：</strong></mark><ul>
+<li>维度越高（如 OpenAI 的 1536 维 或有些 3072 维），表达的语义越丰富，理论上越准。</li>
+<li><strong>代价：</strong> 但在处理千万级文档时，1536 维的向量库对内存（RAM）的消耗极大，检索速度也会变慢。<mark>如果成本受限，我会选择一些维度较低（如 768 维或甚至 384 维）但经过深度优化的模型</mark>，或者在存入向量库前使用 PCA 等降维技术。</li>
+</ul>
+</li>
+<li><mark><strong>是否支持查询与文档的不对称映射 (Asymmetric Retrieval)：</strong></mark><ul>
+<li>RAG 场景是一个典型的不对称检索：Query 通常是一句很短的问句（如“怎么报销？”），而 Document 是很长的一段说明文档。一些模型（如 Instruct 类的 Embedding）专门为此做了优化，允许在 Query 前面加上特定前缀（如 Represent this sentence for searching relevant passages:），这能显著提升召回率。</li>
+</ul>
+</li>
+</ol>
+<p><strong>2. 评估模型好坏的指标 (How to Evaluate)</strong></p>
+<p>如果要在几个候选模型中做最终决定，我不会只看官方宣传，而是会看客观指标并结合业务数据进行评测：</p>
+<ol>
+<li><strong>参考权威榜单 (MTEB &#x2F; C-MTEB Leaderboard)：</strong><ul>
+<li>这是目前业内公认的 Massive Text Embedding Benchmark（海量文本嵌入基准测试）。我会重点看其中的 <strong>Retrieval（检索）</strong> 任务得分，而不是聚类或分类得分。同时如果是中文业务，必须看 C-MTEB 榜单。</li>
+</ul>
+</li>
+<li><strong>核心评价指标：</strong><ul>
+<li><strong>NDCG@10 (归一化折损累计增益)：</strong> 这是衡量搜索引擎排序质量最核心的指标。它不仅看你有没有找对（召回），更看重你<strong>是否把最相关的文档排在了最前面</strong>。在 RAG 中，如果正确文档排在了第 10 名，很可能因为 Context 窗口限制根本送不到 LLM 嘴里，所以排名极度重要。</li>
+<li><strong>MRR (平均倒数排名)：</strong> 评估第一个正确答案出现的位置有多靠前。</li>
+<li><strong>Recall@K (召回率)：</strong> 在返回的 Top-K 个结果中，包含了多少应该被找出来的相关文档。</li>
+</ul>
+</li>
+<li><mark><strong>构建私有评测集 (Golden Dataset - 最关键的一步)：</strong></mark><ul>
+<li>公有榜单得分高，在私有业务上未必好（特别是涉及大量公司内部黑话、缩写或特殊行业术语时）。</li>
+<li>我会在正式选型前，人工（或用 LLM 辅助）构建几百个真实的 (Query, 预期的正确文档) 对。然后用几个不同的 Embedding 模型跑一遍检索，计算它们在我们自己数据上的 NDCG 和 <mark>Recall。</mark>这才是决定最终选型的唯一真理。”</li>
+</ul>
+</li>
+</ol>
+<h2 id="如果rag检索的一些东西，不符合或者语义相识但是词意不同怎么办，还有就是RAG能不能解决一些幻觉的问题"><a href="#如果rag检索的一些东西，不符合或者语义相识但是词意不同怎么办，还有就是RAG能不能解决一些幻觉的问题" class="headerlink" title="如果rag检索的一些东西，不符合或者语义相识但是词意不同怎么办，还有就是RAG能不能解决一些幻觉的问题"></a>如果rag检索的一些东西，不符合或者语义相识但是词意不同怎么办，还有就是RAG能不能解决一些幻觉的问题</h2><p><strong>1. 检索不准怎么办？（“语义相似但词意不同”）</strong></p>
+<ul>
+<li><strong>问题</strong>：向量检索（Vector Search）是基于<strong>语义距离</strong>的。<ul>
+<li><em>例子</em>：用户问“苹果公司股价”，可能检索出“好吃的红富士苹果”，因为“苹果”这个词语义接近。</li>
+<li><em>例子</em>：用户问“不推荐买哪款车”，可能检索出“强烈推荐买这款车”，因为语义上都在聊“买车建议”。</li>
+</ul>
+</li>
+<li><strong>解决方案（组合拳）</strong>：<ol>
+<li><strong>混合检索 (Hybrid Search)</strong>：这是标配。<ul>
+<li>同时用<strong>向量检索</strong>（找意思相近的）和<strong>关键词检索 (BM25)</strong>（找字面完全匹配的）。</li>
+<li>用 <strong>RRF (Reciprocal Rank Fusion)</strong> 算法把两者的结果融合，能极大过滤掉那种“语义像但字面完全不搭”的错配。</li>
+</ul>
+</li>
+<li><strong>重排序 (Re-ranking) —— 最有效</strong>：<ul>
+<li>在初步召回（比如 50 条）后，用一个专门的 <strong>Cross-Encoder 模型</strong>（如 BGE-Reranker）对这 50 条进行精细打分。</li>
+<li>重排序模型比向量模型更聪明，能读懂“不推荐”和“推荐”的逻辑区别，把真正相关的排到第一位。</li>
+</ul>
+</li>
+<li><strong>元数据过滤</strong>：加上 category&#x3D;”tech” 标签，直接过滤掉水果类的文档。</li>
+</ol>
+</li>
+</ul>
+<p><strong>2. RAG 能不能解决幻觉？</strong></p>
+<p><strong>能大幅缓解，但不能 100% 根除。</strong></p>
+<ul>
+<li><strong>RAG 是怎么治幻觉的？</strong><ul>
+<li><strong>限制范围</strong>：我们在 Prompt 里告诉 LLM：“你必须<strong>只根据</strong>我给你的这些资料回答，不知道就说不知道。”</li>
+<li><strong>提供事实</strong>：LLM 瞎编通常是因为它脑子里没干货。RAG 把真凭实据（Context）喂到嘴边，它自然就老实了。</li>
+</ul>
+</li>
+<li><strong>为什么还会通过 RAG 产生幻觉？</strong><ol>
+<li><strong>检索错了</strong>（Garbage In, Garbage Out）：如果检索出来的文档本身就是错的，或者是不相关的，LLM 基于错误信息一本正经地回答，这也是幻觉。</li>
+<li><strong>冲突</strong>：检索到的两段文档说法不一，LLM 可能会“脑补”一个折中方案。</li>
+<li><strong>大模型本性</strong>：即使资料在手，有些模型（尤其是参数量小的）还是会习惯性地添加一些“漂亮的废话”或脑补细节。</li>
+</ol>
+</li>
+</ul>
+<p><strong>RAG 的标准流程通常是：</strong></p>
+<ol>
+<li><strong>全量库 (100万)</strong><br>↓</li>
+<li><strong>粗召回 (Recall)</strong>：用向量或关键词，快速捞出 <strong>Top 100</strong>。<br>↓</li>
+<li><strong>精排序 (Re-ranking)</strong>：用更聪明但更慢的模型（Cross-Encoder），仔细读这 100 篇，打分，选出 <strong>Top 5</strong>。<br>↓</li>
+<li><strong>给大模型</strong>：把这 5 篇喂给 LLM 生成答案。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Ai/" class="category-chain-item">Ai</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9D%A2%E8%AF%95/" class="print-no-link">#面试</a>
+      
+        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
+      
+        <a href="/tags/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA/" class="print-no-link">#检索增强</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>RAG</div>
+      <div>https://kyy-logs.github.io/2026/05/20/ai/RAG/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Yangyang Kong</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年5月20日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/05/20/ai/MCP/" title="MCP">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MCP</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/05/20/ai/Agent-RAG-MCP-Skills/" title="Agent 与 Harness">
+                        <span class="hidden-mobile">Agent 与 Harness</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"kyy-logs/review-repository","repo-id":"R_kgDOR9LLEQ","category":"General","category-id":"DIC_kwDOR9LLEc4C6Yb2","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
